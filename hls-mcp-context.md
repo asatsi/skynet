@@ -110,6 +110,18 @@ This session involved creating a complete healthcare enterprise microservices pl
   - **Center Workspace**: Interactive chat interface with real-time SSE streaming, user messages, assistant markdown responses, and detailed tool execution cards (input JSON, output payload, latency ms).
   - **Right Sidebar Pane**: Dedicated **Live Reasoning & CoT Trace Inspector** displaying step-by-step thinking process, tool selection rationale, and animated thinking indicators.
 
+### 4. OpenAPI Specifications (OpenAPI 3.0.3)
+
+- **Live Endpoints (all 4 services)**:
+  - **OpenAPI 3.0 JSON Spec**: `http://localhost:<port>/v3/api-docs`
+  - **Swagger UI Interactive Explorer**: `http://localhost:<port>/swagger-ui.html`
+- **Dependencies**: Added `springdoc-openapi-starter-webmvc-ui` (`v2.3.0`) to all 4 `pom.xml` files.
+- **Standalone Specifications (`openapi.yaml`)**:
+  - `patient-management-service/openapi.yaml` & `skynet/openapi/patient-management-openapi.yaml` (Port 8081)
+  - `claims-processing-service/openapi.yaml` & `skynet/openapi/claims-processing-openapi.yaml` (Port 8082)
+  - `ehr-service/openapi.yaml` & `skynet/openapi/ehr-service-openapi.yaml` (Port 8083)
+  - `appointment-scheduling-service/openapi.yaml` & `skynet/openapi/appointment-scheduling-openapi.yaml` (Port 8084)
+
 
 ---
 

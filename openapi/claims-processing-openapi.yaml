@@ -1,0 +1,219 @@
+openapi: 3.0.3
+info:
+  title: Claims Processing Service API
+  description: Microservice for submitting, tracking, and updating insurance claims for patients.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8082
+    description: Local Development Server
+paths:
+  /api/claims:
+    get:
+      summary: List all insurance claims
+      description: Retrieves all insurance claims across all patients and statuses.
+      operationId: listClaims
+      responses:
+        '200':
+          description: A list of insurance claims
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Claim'
+    post:
+      summary: Submit a new claim
+      description: Submits a new insurance claim for a patient with provider and billing details.
+      operationId: submitClaim
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimSubmitRequest'
+      responses:
+        '201':
+          description: Claim submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claim'
+        '400':
+          description: Validation error
+
+  /api/claims/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the claim
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: Get claim by ID
+      description: Fetches detailed information for a specific insurance claim.
+      operationId: getClaimById
+      responses:
+        '200':
+          description: Claim details found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claim'
+        '404':
+          description: Claim not found
+
+  /api/claims/{id}/status:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the claim
+        schema:
+          type: integer
+          format: int64
+    put:
+      summary: Update claim status
+      description: Updates the status of an existing claim (e.g., SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED, PAID).
+      operationId: updateClaimStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimStatusUpdateRequest'
+      responses:
+        '200':
+          description: Status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claim'
+        '404':
+          description: Claim not found
+
+  /api/claims/patient/{patientId}:
+    parameters:
+      - name: patientId
+        in: path
+        required: true
+        description: Patient ID to filter claims by
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: Get claims by patient ID
+      description: Fetches all claims associated with a specific patient.
+      operationId: getClaimsByPatientId
+      responses:
+        '200':
+          description: List of claims for the patient
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Claim'
+
+  /api/claims/status/{status}:
+    parameters:
+      - name: status
+        in: path
+        required: true
+        description: Claim status enum value
+        schema:
+          $ref: '#/components/schemas/ClaimStatus'
+    get:
+      summary: Get claims by status
+      description: Fetches all claims matching a given status filter.
+      operationId: getClaimsByStatus
+      responses:
+        '200':
+          description: List of matching claims
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Claim'
+
+components:
+  schemas:
+    ClaimStatus:
+      type: string
+      enum:
+        - SUBMITTED
+        - UNDER_REVIEW
+        - APPROVED
+        - REJECTED
+        - PAID
+
+    Claim:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 501
+        patientId:
+          type: integer
+          format: int64
+          example: 1
+        providerName:
+          type: string
+          example: "St. Jude Hospital"
+        claimAmount:
+          type: number
+          format: double
+          example: 750.00
+        serviceDate:
+          type: string
+          format: date
+          example: "2026-08-10"
+        status:
+          $ref: '#/components/schemas/ClaimStatus'
+        diagnosisCode:
+          type: string
+          example: "ICD-10-CM Z00.00"
+        description:
+          type: string
+          example: "Outpatient Cardiology Consultation"
+        submissionDate:
+          type: string
+          format: date-time
+
+    ClaimSubmitRequest:
+      type: object
+      required:
+        - patientId
+        - providerName
+        - claimAmount
+        - serviceDate
+        - diagnosisCode
+      properties:
+        patientId:
+          type: integer
+          format: int64
+        providerName:
+          type: string
+        claimAmount:
+          type: number
+          format: double
+        serviceDate:
+          type: string
+          format: date
+        diagnosisCode:
+          type: string
+        description:
+          type: string
+
+    ClaimStatusUpdateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/ClaimStatus'
+        remarks:
+          type: string

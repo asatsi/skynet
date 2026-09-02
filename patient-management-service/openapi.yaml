@@ -1,0 +1,271 @@
+openapi: 3.0.3
+info:
+  title: Patient Management Service API
+  description: Microservice for managing patient demographics, contact information, and medical history records.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8081
+    description: Local Development Server
+paths:
+  /api/patients:
+    get:
+      summary: List all patients
+      description: Retrieves a list of all registered patients in the system.
+      operationId: listPatients
+      responses:
+        '200':
+          description: A list of patients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Patient'
+    post:
+      summary: Create a new patient
+      description: Creates a new patient record with demographics and contact details.
+      operationId: createPatient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientCreateRequest'
+      responses:
+        '201':
+          description: Patient successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '400':
+          description: Validation error or duplicate patient SSN/Email
+
+  /api/patients/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the patient
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: Get patient by ID
+      description: Fetches demographics and details for a specific patient.
+      operationId: getPatientById
+      responses:
+        '200':
+          description: Patient found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '404':
+          description: Patient not found
+    put:
+      summary: Update patient details
+      description: Updates demographic or contact information for an existing patient.
+      operationId: updatePatient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientUpdateRequest'
+      responses:
+        '200':
+          description: Patient successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '404':
+          description: Patient not found
+    delete:
+      summary: Delete patient
+      description: Deletes a patient record from the system by ID.
+      operationId: deletePatient
+      responses:
+        '204':
+          description: Patient deleted successfully
+        '404':
+          description: Patient not found
+
+  /api/patients/{patientId}/medical-records:
+    parameters:
+      - name: patientId
+        in: path
+        required: true
+        description: ID of the patient whose medical records are being accessed
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: Get medical records for patient
+      description: Retrieves all medical history records associated with the patient.
+      operationId: getMedicalRecords
+      responses:
+        '200':
+          description: List of medical records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicalRecord'
+        '404':
+          description: Patient not found
+    post:
+      summary: Add medical record for patient
+      description: Adds a medical history record entry for the patient.
+      operationId: addMedicalRecord
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalRecordCreateRequest'
+      responses:
+        '201':
+          description: Medical record added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalRecord'
+        '404':
+          description: Patient not found
+
+components:
+  schemas:
+    Patient:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        dateOfBirth:
+          type: string
+          format: date
+          example: "1985-03-15"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        phone:
+          type: string
+          example: "+1-555-123-4567"
+        address:
+          type: string
+          example: "123 Main Street, Springfield, IL 62701"
+        ssn:
+          type: string
+          example: "123-45-6789"
+        bloodType:
+          type: string
+          example: "O+"
+        allergies:
+          type: string
+          example: "Penicillin, Peanuts"
+
+    PatientCreateRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - dateOfBirth
+        - email
+        - phone
+        - ssn
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: string
+        ssn:
+          type: string
+        bloodType:
+          type: string
+        allergies:
+          type: string
+
+    PatientUpdateRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: string
+        bloodType:
+          type: string
+        allergies:
+          type: string
+
+    MedicalRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 101
+        patientId:
+          type: integer
+          format: int64
+          example: 1
+        recordDate:
+          type: string
+          format: date
+          example: "2026-08-01"
+        description:
+          type: string
+          example: "Annual physical checkup"
+        doctorName:
+          type: string
+          example: "Dr. Alice Smith"
+        notes:
+          type: string
+          example: "Patient in overall good health."
+
+    MedicalRecordCreateRequest:
+      type: object
+      required:
+        - recordDate
+        - description
+        - doctorName
+      properties:
+        recordDate:
+          type: string
+          format: date
+        description:
+          type: string
+        doctorName:
+          type: string
+        notes:
+          type: string
