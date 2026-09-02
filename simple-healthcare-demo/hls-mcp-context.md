@@ -122,6 +122,19 @@ This session involved creating a complete healthcare enterprise microservices pl
   - `ehr-service/openapi.yaml` & `skynet/openapi/ehr-service-openapi.yaml` (Port 8083)
   - `appointment-scheduling-service/openapi.yaml` & `skynet/openapi/appointment-scheduling-openapi.yaml` (Port 8084)
 
+### 5. MCP Accelerator (`mcp_accelerator/`)
+
+- **Directory**: `mcp_accelerator/`
+- **Purpose**: Generic parser and code generator that scans Java Spring Boot microservices, parses OpenAPI specifications and `@RestController` annotations, categorizes microservices into logical business domains, and generates domain-scoped MCP servers.
+- **Commands**:
+  - `uv run python cli.py scan <target_dir>`: Discovers Spring Boot projects, extracts API tools, and displays domain categorization tables.
+  - `uv run python cli.py generate <target_dir> --output <output_dir>`: Generates complete, executable MCP domain servers (`healthcare_domain_mcp`, `insurance_domain_mcp`, `scheduling_domain_mcp`).
+- **Features**:
+  - Automatic port & application name extraction from `pom.xml`, `application.properties`/`application.yml`.
+  - Fallback Java controller annotation scanner if OpenAPI spec is absent.
+  - Domain clustering ensuring **one domain MCP server provides access to all tools within that domain**.
+  - Async `httpx` REST execution handlers and `uv`-compatible `pyproject.toml` generation.
+
 
 ---
 
