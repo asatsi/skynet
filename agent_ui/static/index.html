@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Healthcare MCP Agent — Reasoning & Tool Execution UI</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons & Marked Markdown Parser -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Left Sidebar Navigation -->
+    <aside class="sidebar left-sidebar">
+      <div class="brand-header">
+        <div class="brand-logo">
+          <i class="fa-solid fa-brain-circuit"></i>
+        </div>
+        <div class="brand-info">
+          <h2>Skynet MCP Agent</h2>
+          <span class="version-tag">Reasoning Engine v1.0</span>
+        </div>
+      </div>
+
+      <!-- Connection Status Card -->
+      <div class="status-card glass-panel">
+        <div class="status-header">
+          <span><i class="fa-solid fa-server"></i> System Metrics</span>
+          <button id="refresh-status-btn" class="icon-btn" title="Refresh System Status"><i class="fa-solid fa-rotate-right"></i></button>
+        </div>
+        <div class="status-items">
+          <div class="status-item">
+            <span class="label">MCP Transport (SSE)</span>
+            <span class="badge" id="mcp-status-badge"><i class="fa-solid fa-circle-notch fa-spin"></i> Checking</span>
+          </div>
+          <div class="status-item">
+            <span class="label">Available MCP Tools</span>
+            <span class="badge count-badge" id="mcp-tools-count">0 Tools</span>
+          </div>
+          <div class="status-item">
+            <span class="label">Local LLM (Ollama)</span>
+            <span class="badge" id="ollama-status-badge"><i class="fa-solid fa-circle-notch fa-spin"></i> Checking</span>
+          </div>
+          <div class="status-item">
+            <span class="label">Active Model</span>
+            <span class="model-name" id="active-model-name">qwen3.5:9b</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Prompts -->
+      <div class="section-title">
+        <i class="fa-solid fa-bolt"></i> Quick Operations
+      </div>
+      <div class="quick-prompts">
+        <button class="prompt-chip" data-prompt="List all patients currently registered in the patient service.">
+          <i class="fa-solid fa-users"></i> List All Patients
+        </button>
+        <button class="prompt-chip" data-prompt="List all healthcare providers and their specializations.">
+          <i class="fa-solid fa-user-doctor"></i> List Healthcare Providers
+        </button>
+        <button class="prompt-chip" data-prompt="Create a new patient named John Doe, DOB 1988-05-20, email john.doe@example.com, phone +1-555-0199, SSN 999-88-7766, blood type A+.">
+          <i class="fa-solid fa-user-plus"></i> Create Patient John Doe
+        </button>
+        <button class="prompt-chip" data-prompt="List all insurance claims and show their current processing status.">
+          <i class="fa-solid fa-file-invoice-dollar"></i> List Insurance Claims
+        </button>
+        <button class="prompt-chip" data-prompt="Book an appointment for patient ID 1 with provider ID 1 on 2026-09-10 at 10:00 AM for a routine checkup.">
+          <i class="fa-solid fa-calendar-check"></i> Book Appointment
+        </button>
+      </div>
+
+      <!-- Active Tools Explorer -->
+      <div class="section-title">
+        <i class="fa-solid fa-toolbox"></i> MCP Tools Registry (<span id="tools-badge-num">29</span>)
+      </div>
+      <div class="tools-explorer glass-panel" id="tools-list-container">
+        <div class="tools-placeholder"><i class="fa-solid fa-spinner fa-spin"></i> Loading tools registry...</div>
+      </div>
+
+      <div class="sidebar-footer">
+        <span>Connected to <code id="mcp-endpoint-url">http://localhost:8000/sse</code></span>
+      </div>
+    </aside>
+
+    <!-- Main Chat Workspace (Center) -->
+    <main class="chat-workspace">
+      <!-- Top Action Bar -->
+      <header class="workspace-header glass-panel">
+        <div class="header-left">
+          <div class="session-info">
+            <h1>Healthcare Operations Chat Session</h1>
+            <p>Model Context Protocol Execution Workspace</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="clear-chat-btn" class="secondary-btn"><i class="fa-solid fa-trash-can"></i> Clear Session</button>
+        </div>
+      </header>
+
+      <!-- Chat Messages Container -->
+      <div class="messages-container" id="messages-container">
+        <!-- Welcome Card -->
+        <div class="welcome-card glass-panel">
+          <div class="welcome-icon"><i class="fa-solid fa-head-side-virus"></i></div>
+          <h2>Welcome to Healthcare MCP Agent Workspace</h2>
+          <p>This intelligent agent connects directly to your 4 Spring Boot Healthcare Microservices over HTTP/SSE via 29 MCP tools. As you type requests, watch the agent's <strong>live reasoning trace in the right-side panel</strong>.</p>
+          <div class="welcome-highlights">
+            <div class="highlight-item"><i class="fa-solid fa-sidebar"></i> Dedicated Right-Pane Reasoning</div>
+            <div class="highlight-item"><i class="fa-solid fa-arrows-split-up-and-left"></i> Dynamic MCP Tool Execution</div>
+            <div class="highlight-item"><i class="fa-solid fa-network-wired"></i> 4 Connected Microservices</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Bar Container -->
+      <footer class="input-workspace glass-panel">
+        <form id="chat-form" class="chat-form">
+          <div class="textarea-wrapper">
+            <textarea id="user-input" placeholder="Ask anything (e.g., 'List patients', 'Create patient Jane Smith', 'Check health summary for patient 1')..." rows="2"></textarea>
+            <div class="input-actions">
+              <span class="shortcut-hint"><i class="fa-solid fa-keyboard"></i> Shift + Enter for new line</span>
+              <button type="submit" id="send-btn" class="send-btn">
+                <span>Send</span>
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </form>
+      </footer>
+    </main>
+
+    <!-- Right Side Reasoning Pane -->
+    <aside class="sidebar right-sidebar reasoning-pane" id="reasoning-pane">
+      <div class="reasoning-pane-header">
+        <div class="pane-title">
+          <i class="fa-solid fa-brain"></i>
+          <h3>Live Reasoning & CoT Trace</h3>
+        </div>
+        <button id="clear-reasoning-btn" class="icon-btn" title="Clear Reasoning History">
+          <i class="fa-solid fa-eraser"></i>
+        </button>
+      </div>
+
+      <!-- Thinking Indicator Banner -->
+      <div class="thinking-banner" id="thinking-banner" style="display: none;">
+        <i class="fa-solid fa-circle-notch fa-spin"></i>
+        <span>Agent Thinking & Tool Invocation...</span>
+      </div>
+
+      <!-- Reasoning Steps Timeline Feed -->
+      <div class="reasoning-timeline" id="reasoning-timeline">
+        <div class="timeline-empty">
+          <i class="fa-solid fa-lightbulb"></i>
+          <p>Reasoning steps will appear live in this panel as the agent processes your queries.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Custom JavaScript -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
