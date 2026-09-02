@@ -9,7 +9,12 @@ web_modules/
 vendor/
 packages/
 .pnp*
+
+# Ignore Python bytecode cache
+**/__pycache__/
+*.py[cod]
 .venv/
+venv/
 
 # ==========================================
 # Environment Variables & Secrets (CRITICAL)
