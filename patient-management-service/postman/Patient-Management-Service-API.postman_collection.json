@@ -1,0 +1,154 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-0001-4000-8000-patientmgmt001",
+		"name": "Patient Management Service API",
+		"description": "REST API collection for the Patient Management Service (port 8081). Covers full patient CRUD and medical record operations.\n\nSet the `baseUrl` collection variable to point at your running instance (default: http://localhost:8081).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8081",
+			"description": "Base URL of the running Patient Management Service"
+		}
+	],
+	"item": [
+		{
+			"name": "Patients",
+			"description": "Full CRUD operations for patient resources",
+			"item": [
+				{
+					"name": "Get All Patients",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/patients",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "patients"]
+						},
+						"description": "Retrieve the list of all registered patients. Returns 200 OK with an array of patients (empty array when none exist)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Patient by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/patients/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "patients", "1"]
+						},
+						"description": "Retrieve a single patient by ID. Returns 200 OK with the patient, or 404 Not Found if the patient does not exist."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Patient",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"dateOfBirth\": \"1985-03-15\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1-555-123-4567\",\n    \"address\": \"123 Main Street, Springfield, IL 62701\",\n    \"ssn\": \"123-45-6789\",\n    \"bloodType\": \"O+\",\n    \"allergies\": \"Penicillin, Peanuts\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/patients",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "patients"]
+						},
+						"description": "Register a new patient. Returns 201 Created with the persisted patient (including generated ID). Returns 400 Bad Request on validation errors and 409 Conflict when the email or SSN is already registered."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Patient",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"dateOfBirth\": \"1985-03-15\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1-555-987-6543\",\n    \"address\": \"456 Oak Avenue, Springfield, IL 62702\",\n    \"ssn\": \"123-45-6789\",\n    \"bloodType\": \"O+\",\n    \"allergies\": \"Penicillin, Peanuts, Dust\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/patients/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "patients", "1"]
+						},
+						"description": "Update an existing patient by ID. All fields are replaced with the values supplied. Returns 200 OK with the updated patient, 404 Not Found if the patient does not exist, or 409 Conflict on duplicate email/SSN."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Patient",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/patients/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "patients", "1"]
+						},
+						"description": "Delete a patient by ID. Returns 204 No Content on success, or 404 Not Found if the patient does not exist."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Medical Records",
+			"description": "Medical record operations scoped to a patient",
+			"item": [
+				{
+					"name": "Get Medical Records for Patient",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/patients/1/medical-records",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "patients", "1", "medical-records"]
+						},
+						"description": "Retrieve all medical records for a patient, ordered by record date (most recent first). Returns 200 OK with an array of records, or 404 Not Found if the patient does not exist."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Medical Record for Patient",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"recordDate\": \"2024-05-10\",\n    \"diagnosis\": \"Type 2 Diabetes Mellitus\",\n    \"treatment\": \"Metformin 500mg twice daily, dietary counseling\",\n    \"notes\": \"Patient advised on blood glucose monitoring. Follow-up in 3 months.\",\n    \"physician\": \"Dr. Sarah Johnson\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/patients/1/medical-records",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "patients", "1", "medical-records"]
+						},
+						"description": "Add a new medical record to a patient. The patientId is taken from the path; it does not need to be in the body. Returns 201 Created with the persisted record, 400 Bad Request on validation errors, or 404 Not Found if the patient does not exist."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

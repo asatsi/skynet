@@ -1,0 +1,249 @@
+{
+  "info": {
+    "_postman_id": "ehr-service-collection-001",
+    "name": "EHR-Service-API",
+    "description": "Postman collection for the EHR Service (port 8083). Covers Lab Results, Diagnoses, Treatment Plans, and the aggregated Patient Summary endpoint.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083"
+    }
+  ],
+  "item": [
+    {
+      "name": "Lab Results",
+      "description": "Endpoints for managing lab results",
+      "item": [
+        {
+          "name": "Get All Lab Results",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/lab-results",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "lab-results"]
+            },
+            "description": "Retrieve all lab results in the system."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lab Result By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/lab-results/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "lab-results", "1"]
+            },
+            "description": "Retrieve a single lab result by its ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lab Results By Patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/lab-results/patient/1001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "lab-results", "patient", "1001"]
+            },
+            "description": "Retrieve all lab results for a specific patient."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Lab Result",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": 1001,\n  \"testName\": \"Complete Blood Count\",\n  \"testCode\": \"CBC-001\",\n  \"testDate\": \"2024-05-10\",\n  \"resultValue\": \"5.4\",\n  \"unit\": \"million cells/mcL\",\n  \"referenceRange\": \"4.5-5.5\",\n  \"status\": \"COMPLETED\",\n  \"orderedBy\": \"Dr. Sarah Johnson\",\n  \"notes\": \"Fasting sample collected at 8 AM\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/lab-results",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "lab-results"]
+            },
+            "description": "Create a new lab result for a patient."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Diagnoses",
+      "description": "Endpoints for managing diagnoses",
+      "item": [
+        {
+          "name": "Get All Diagnoses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/diagnoses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "diagnoses"]
+            },
+            "description": "Retrieve all diagnoses in the system."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Diagnosis By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/diagnoses/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "diagnoses", "1"]
+            },
+            "description": "Retrieve a single diagnosis by its ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Diagnoses By Patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/diagnoses/patient/1001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "diagnoses", "patient", "1001"]
+            },
+            "description": "Retrieve all diagnoses for a specific patient."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Diagnosis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": 1001,\n  \"diagnosisCode\": \"E11.9\",\n  \"diagnosisName\": \"Type 2 Diabetes Mellitus\",\n  \"description\": \"Type 2 diabetes without complications\",\n  \"diagnosisDate\": \"2024-05-10\",\n  \"severity\": \"MODERATE\",\n  \"status\": \"ACTIVE\",\n  \"diagnosedBy\": \"Dr. Sarah Johnson\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/diagnoses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "diagnoses"]
+            },
+            "description": "Create a new diagnosis for a patient."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Treatment Plans",
+      "description": "Endpoints for managing treatment plans",
+      "item": [
+        {
+          "name": "Get All Treatment Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/treatment-plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "treatment-plans"]
+            },
+            "description": "Retrieve all treatment plans in the system."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Treatment Plan By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/treatment-plans/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "treatment-plans", "1"]
+            },
+            "description": "Retrieve a single treatment plan by its ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Treatment Plans By Patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/treatment-plans/patient/1001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "treatment-plans", "patient", "1001"]
+            },
+            "description": "Retrieve all treatment plans for a specific patient."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Treatment Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": 1001,\n  \"planName\": \"Diabetes Management Plan\",\n  \"description\": \"Comprehensive plan for managing Type 2 diabetes\",\n  \"startDate\": \"2024-05-15\",\n  \"endDate\": \"2024-11-15\",\n  \"status\": \"ACTIVE\",\n  \"prescribedBy\": \"Dr. Sarah Johnson\",\n  \"medications\": \"Metformin 500mg twice daily\",\n  \"instructions\": \"Monitor blood glucose twice daily. Follow low-carb diet. Exercise 30 minutes daily.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/treatment-plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "treatment-plans"]
+            },
+            "description": "Create a new treatment plan for a patient."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Patient Summary",
+      "description": "Aggregated EHR view for a patient",
+      "item": [
+        {
+          "name": "Get Patient Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ehr/patient/1001/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ehr", "patient", "1001", "summary"]
+            },
+            "description": "Retrieve a full EHR summary for a patient: all lab results, diagnoses, and treatment plans in one response."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

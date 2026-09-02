@@ -1,0 +1,313 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-claims-processing-service",
+    "name": "Claims Processing Service API",
+    "description": "API collection for the Claims Processing Service (port 8082). Manages insurance claims including submission, review, approval, rejection, and payment workflows.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082",
+      "description": "Base URL for the Claims Processing Service"
+    }
+  ],
+  "item": [
+    {
+      "name": "Claims",
+      "description": "Core CRUD operations for claims",
+      "item": [
+        {
+          "name": "Get All Claims",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims"]
+            },
+            "description": "Retrieve a list of all claims in the system."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Claim by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "1"]
+            },
+            "description": "Retrieve a specific claim by its unique ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Claim by Claim Number",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/claim-number/CLM-2024-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "claim-number", "CLM-2024-001"]
+            },
+            "description": "Retrieve a specific claim by its claim number."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Claim",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"claimNumber\": \"CLM-2024-001\",\n  \"patientId\": 1001,\n  \"policyNumber\": \"POL-2024-5678\",\n  \"claimDate\": \"2024-01-15\",\n  \"claimAmount\": 2500.00,\n  \"status\": \"SUBMITTED\",\n  \"description\": \"Emergency room visit for severe abdominal pain. Includes CT scan, lab work, and physician consultation.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/claims",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims"]
+            },
+            "description": "Submit a new insurance claim. Status defaults to SUBMITTED if not provided."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Claim",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"claimNumber\": \"CLM-2024-001\",\n  \"patientId\": 1001,\n  \"policyNumber\": \"POL-2024-5678\",\n  \"claimDate\": \"2024-01-15\",\n  \"claimAmount\": 2750.00,\n  \"status\": \"UNDER_REVIEW\",\n  \"description\": \"Emergency room visit for severe abdominal pain. Updated to include additional radiology charges.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "1"]
+            },
+            "description": "Update an existing claim with new details. All fields are replaced."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Claim",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "1"]
+            },
+            "description": "Delete a claim by its ID. Returns 204 No Content on success."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Claim Queries",
+      "description": "Query claims by patient or status",
+      "item": [
+        {
+          "name": "Get Claims by Patient ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/patient/1001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "patient", "1001"]
+            },
+            "description": "Retrieve all claims associated with a specific patient."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Claims by Status - SUBMITTED",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/status/SUBMITTED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "status", "SUBMITTED"]
+            },
+            "description": "Retrieve all claims with SUBMITTED status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Claims by Status - UNDER_REVIEW",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/status/UNDER_REVIEW",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "status", "UNDER_REVIEW"]
+            },
+            "description": "Retrieve all claims with UNDER_REVIEW status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Claims by Status - APPROVED",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/status/APPROVED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "status", "APPROVED"]
+            },
+            "description": "Retrieve all claims with APPROVED status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Claims by Status - REJECTED",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/status/REJECTED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "status", "REJECTED"]
+            },
+            "description": "Retrieve all claims with REJECTED status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Claims by Status - PAID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/status/PAID",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "status", "PAID"]
+            },
+            "description": "Retrieve all claims with PAID status."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Claim Status Management",
+      "description": "Update claim status through the processing workflow",
+      "item": [
+        {
+          "name": "Update Status to UNDER_REVIEW",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"UNDER_REVIEW\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "1", "status"]
+            },
+            "description": "Transition a claim to UNDER_REVIEW status."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Status to APPROVED",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "1", "status"]
+            },
+            "description": "Approve a claim after review."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Status to REJECTED",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"REJECTED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "1", "status"]
+            },
+            "description": "Reject a claim after review."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Status to PAID",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PAID\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "1", "status"]
+            },
+            "description": "Mark a claim as paid after disbursement."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
