@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcp-accelerator"
+version = "0.1.0"
+description = "Generic Java Spring Boot to MCP Server Parser & Domain Generator"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.2.0,<2.0.0",
+    "httpx>=0.25.0",
+    "pyyaml>=6.0",
+    "click>=8.0",
+    "rich>=13.0",
+    "uvicorn>=0.24.0",
+]
+
+[project.scripts]
+mcp-accelerator = "mcp_accelerator.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_accelerator"]
