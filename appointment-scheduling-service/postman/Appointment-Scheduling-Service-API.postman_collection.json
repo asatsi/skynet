@@ -1,0 +1,280 @@
+{
+  "info": {
+    "name": "Appointment Scheduling Service API",
+    "description": "API collection for the Appointment Scheduling Service (port 8084). Manages appointments and healthcare providers for the healthcare platform.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8084"
+    }
+  ],
+  "item": [
+    {
+      "name": "Appointments",
+      "description": "Endpoints for managing appointments",
+      "item": [
+        {
+          "name": "Get All Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments"]
+            },
+            "description": "Retrieve a list of all appointments."
+          }
+        },
+        {
+          "name": "Get Appointment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "1"]
+            },
+            "description": "Retrieve a single appointment by its ID."
+          }
+        },
+        {
+          "name": "Create Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": 1,\n  \"providerId\": 1,\n  \"appointmentDate\": \"2024-06-15\",\n  \"appointmentTime\": \"10:30:00\",\n  \"duration\": 30,\n  \"status\": \"SCHEDULED\",\n  \"reason\": \"Annual physical examination\",\n  \"notes\": \"Patient requested morning appointment\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments"]
+            },
+            "description": "Create a new appointment. The providerId must reference an existing provider. Status defaults to SCHEDULED if omitted."
+          }
+        },
+        {
+          "name": "Update Appointment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": 1,\n  \"providerId\": 1,\n  \"appointmentDate\": \"2024-06-16\",\n  \"appointmentTime\": \"14:00:00\",\n  \"duration\": 45,\n  \"status\": \"CONFIRMED\",\n  \"reason\": \"Annual physical examination - rescheduled\",\n  \"notes\": \"Moved to afternoon per patient request\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "1"]
+            },
+            "description": "Update an existing appointment by ID."
+          }
+        },
+        {
+          "name": "Update Appointment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "1", "status"]
+            },
+            "description": "Update only the status of an appointment. Valid statuses: SCHEDULED, CONFIRMED, CANCELLED, COMPLETED, NO_SHOW."
+          }
+        },
+        {
+          "name": "Delete Appointment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "1"]
+            },
+            "description": "Delete an appointment by ID."
+          }
+        },
+        {
+          "name": "Get Appointments by Patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/patient/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "patient", "1"]
+            },
+            "description": "Retrieve all appointments for a specific patient."
+          }
+        },
+        {
+          "name": "Get Appointments by Provider",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/provider/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "provider", "1"]
+            },
+            "description": "Retrieve all appointments for a specific provider."
+          }
+        },
+        {
+          "name": "Get Appointments by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/status/SCHEDULED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "status", "SCHEDULED"]
+            },
+            "description": "Retrieve all appointments with a specific status (SCHEDULED, CONFIRMED, CANCELLED, COMPLETED, NO_SHOW)."
+          }
+        },
+        {
+          "name": "Get Appointments by Date",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/date/2024-06-15",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "date", "2024-06-15"]
+            },
+            "description": "Retrieve all appointments scheduled for a specific date (ISO format: YYYY-MM-DD)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Providers",
+      "description": "Endpoints for managing healthcare providers",
+      "item": [
+        {
+          "name": "Get All Providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/providers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "providers"]
+            },
+            "description": "Retrieve a list of all healthcare providers."
+          }
+        },
+        {
+          "name": "Get Provider by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/providers/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "providers", "1"]
+            },
+            "description": "Retrieve a single provider by ID."
+          }
+        },
+        {
+          "name": "Create Provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Sarah\",\n  \"lastName\": \"Johnson\",\n  \"specialization\": \"Cardiology\",\n  \"email\": \"sarah.johnson@healthcare.com\",\n  \"phone\": \"+1-555-0142\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/providers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "providers"]
+            },
+            "description": "Register a new healthcare provider. Email must be unique."
+          }
+        },
+        {
+          "name": "Update Provider",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Sarah\",\n  \"lastName\": \"Johnson\",\n  \"specialization\": \"Interventional Cardiology\",\n  \"email\": \"sarah.johnson@healthcare.com\",\n  \"phone\": \"+1-555-0199\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/providers/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "providers", "1"]
+            },
+            "description": "Update an existing provider by ID."
+          }
+        },
+        {
+          "name": "Delete Provider",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/providers/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "providers", "1"]
+            },
+            "description": "Delete a provider by ID."
+          }
+        },
+        {
+          "name": "Get Providers by Specialization",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/providers/specialization/Cardiology",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "providers", "specialization", "Cardiology"]
+            },
+            "description": "Retrieve all providers with a specific specialization."
+          }
+        }
+      ]
+    }
+  ]
+}
