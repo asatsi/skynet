@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SASVA · BFSI Loan Onboarding Copilot</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07101e;--bg2:#0c1829;--surface:#111f35;--surface2:#192c47;--surface3:#213858;
+  --border:rgba(100,140,200,.16);--border2:rgba(100,140,200,.28);
+  --text:#dde8f8;--text2:#8daac8;--text3:#4a6a8a;
+  --accent:#1e6fd9;--accent2:#4d9ef7;--accent-dim:rgba(30,111,217,.14);
+  --teal:#14b8a6;--teal-dim:rgba(20,184,166,.12);
+  --green:#34d399;--green-dim:rgba(52,211,153,.12);
+  --red:#f87171;--red-dim:rgba(248,113,113,.12);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,.1);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,.12);
+  --gold:#f59e0b;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,"Cascadia Code","Fira Code",Menlo,monospace;
+  --r:12px;--rs:7px;--sb-w:270px;--hdr:58px;--rp-w:340px;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);font-size:14px;background:var(--bg);color:var(--text);line-height:1.6}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:10px}
+
+/* ── Layout ─────────────────────────────────────────────────────────── */
+.shell{display:grid;grid-template-columns:var(--sb-w) 1fr;grid-template-rows:var(--hdr) 1fr;height:100vh;transition:grid-template-columns .25s}
+.shell.rp-open{grid-template-columns:var(--sb-w) 1fr var(--rp-w)}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────── */
+.sidebar{grid-row:1/3;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.brand{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;flex-shrink:0}
+.brand-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#0d4a9e,#1a7fd4);display:grid;place-items:center;font-size:17px;box-shadow:0 0 18px rgba(30,111,217,.4)}
+.brand-name{font-size:14px;font-weight:700;background:linear-gradient(90deg,var(--accent2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand-sub{font-size:10.5px;color:var(--text3)}
+.sb-section{padding:12px 16px 8px;flex-shrink:0}
+.sb-label{font-size:9.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:9px}
+.svc-row{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:var(--rs);background:var(--surface);border:1px solid var(--border);margin-bottom:5px;transition:border-color .2s}
+.svc-row:hover{border-color:var(--border2)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--text3);transition:background .3s,box-shadow .3s;flex-shrink:0}
+.dot.up{background:var(--green);box-shadow:0 0 7px rgba(52,211,153,.6)}
+.dot.down{background:var(--red);box-shadow:0 0 7px rgba(248,113,113,.5)}
+.svc-name{font-size:11.5px;font-weight:600;color:var(--text2)}
+.svc-val{font-size:10px;color:var(--text3);margin-left:auto;white-space:nowrap}
+.agent-chip{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:5px;margin-bottom:2px;font-size:11.5px;transition:background .15s}
+.agent-chip:hover{background:var(--surface2)}
+.agent-dot{width:5px;height:5px;border-radius:50%;background:var(--accent2);flex-shrink:0}
+.agent-name{color:var(--text2);font-family:var(--mono)}
+.agent-chip.active .agent-dot{background:var(--green);animation:pulse 1s infinite}
+.sb-nav{display:flex;flex-direction:column;gap:2px;padding:8px 12px;flex-shrink:0}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--rs);border:none;background:none;color:var(--text2);font:600 12.5px var(--font);cursor:pointer;width:100%;transition:all .15s}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}
+.nav-btn.active{background:var(--accent-dim);color:var(--accent2);border:1px solid rgba(30,111,217,.25)}
+.nav-icon{font-size:14px;width:18px;text-align:center}
+.new-chat{margin:auto 14px 14px;padding:9px;background:var(--accent-dim);border:1px solid rgba(30,111,217,.3);border-radius:var(--rs);color:var(--accent2);font:600 12px var(--font);cursor:pointer;text-align:center;transition:all .2s}
+.new-chat:hover{background:rgba(30,111,217,.22);border-color:rgba(30,111,217,.5)}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+header{grid-column:2;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px}
+.hdr-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.live-badge{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,.25)}
+.hdr-sp{flex:1}
+.hdr-model{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.hdr-model b{color:var(--text2)}
+.rp-toggle{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--rs);background:var(--surface);border:1px solid var(--border);color:var(--text2);font:600 11.5px var(--font);cursor:pointer;transition:all .2s}
+.rp-toggle:hover{background:var(--surface2);color:var(--accent2)}
+.rp-toggle.on{background:var(--accent-dim);border-color:rgba(30,111,217,.4);color:var(--accent2)}
+
+/* ── Main content area ───────────────────────────────────────────────── */
+main{grid-column:2;overflow:hidden;display:flex;flex-direction:column}
+
+/* ── Tab panels ─────────────────────────────────────────────────────── */
+.tab-panel{display:none;flex:1;overflow:hidden}
+.tab-panel.active{display:flex;flex-direction:column}
+
+/* ── Chat panel ─────────────────────────────────────────────────────── */
+#chat-panel{flex-direction:row}
+.chat-col{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#chat-area{flex:1;overflow-y:auto;padding:24px}
+.msgs{max-width:760px;margin:0 auto}
+
+.welcome{text-align:center;padding:40px 20px 24px}
+.welcome-icon{font-size:42px;margin-bottom:12px;filter:drop-shadow(0 0 20px rgba(30,111,217,.5))}
+.welcome h2{font-size:20px;font-weight:700;margin-bottom:8px}
+.welcome p{font-size:13.5px;color:var(--text2);max-width:420px;margin:0 auto 22px}
+.chip-grid{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:580px;margin:0 auto}
+.chip{padding:7px 14px;border-radius:20px;font-size:12.5px;cursor:pointer;background:var(--surface);border:1px solid var(--border2);color:var(--text2);transition:all .15s}
+.chip:hover{background:var(--surface2);border-color:rgba(30,111,217,.4);color:var(--accent2);transform:translateY(-1px)}
+
+.msg-row{display:flex;gap:11px;margin-bottom:22px;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}
+.av{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:12px;font-weight:700;margin-top:2px}
+.user-av{background:linear-gradient(135deg,#0d3b6e,#1a5ca8);color:#93c5fd;font-size:11px}
+.ai-av{background:linear-gradient(135deg,#0d2040,#1a3a6e);color:var(--accent2)}
+.msg-body{flex:1;min-width:0}
+.msg-meta{display:flex;align-items:baseline;gap:7px;margin-bottom:4px}
+.msg-who{font-size:12px;font-weight:600}
+.user-row .msg-who{color:var(--accent2)}.ai-row .msg-who{color:var(--teal)}
+.msg-ts{font-size:10px;color:var(--text3)}
+.bubble{padding:11px 15px;border-radius:var(--r);border:1px solid var(--border);font-size:13.5px;line-height:1.7}
+.user-row .bubble{background:linear-gradient(135deg,rgba(13,58,110,.6),rgba(26,92,168,.15));border-color:rgba(30,111,217,.22)}
+.ai-row .bubble{background:var(--surface)}
+.bubble p{margin:0 0 8px}.bubble p:last-child{margin:0}
+.bubble strong{color:var(--text)}
+.bubble code{background:var(--surface3);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:12px;color:#93c5fd}
+.bubble pre{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 13px;overflow-x:auto;margin:8px 0}
+.bubble pre code{background:none;padding:0;color:#b0c4de;font-size:11.5px}
+.bubble table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.bubble th{background:var(--surface2);padding:6px 10px;border:1px solid var(--border2);font-weight:600;color:var(--text2);text-align:left}
+.bubble td{padding:5px 10px;border:1px solid var(--border)}
+.bubble tr:hover td{background:var(--surface2)}
+.bubble ul,.bubble ol{padding-left:18px;margin:5px 0}
+.bubble h3{font-size:14px;margin:10px 0 5px;color:var(--text)}
+
+.thinking{display:flex;align-items:center;gap:9px;color:var(--text3);font-size:12.5px;font-style:italic;padding:10px 14px;background:var(--surface);border-radius:var(--r);border:1px solid var(--border)}
+.dots{display:flex;gap:3px}.dot-ani{width:5px;height:5px;border-radius:50%;background:var(--accent2);opacity:.4;animation:pulse 1.2s infinite}
+.dot-ani:nth-child(2){animation-delay:.2s}.dot-ani:nth-child(3){animation-delay:.4s}
+.err-bubble{background:var(--red-dim);border:1px solid rgba(248,113,113,.3);color:var(--red);padding:9px 13px;border-radius:var(--rs);font-size:13px}
+
+.agent-trace{display:flex;flex-direction:column;gap:4px;margin:8px 0 4px}
+.tc-card{border:1px solid rgba(167,139,250,.2);background:var(--bg2);border-radius:var(--rs);overflow:hidden;font-size:12.5px}
+.tc-hd{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;transition:background .15s}
+.tc-hd:hover{background:var(--surface2)}
+.tc-agent{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,.2);text-transform:uppercase;letter-spacing:.5px}
+.tc-tool{font-family:var(--mono);font-size:11.5px;color:var(--text2);flex:1}
+.tc-badge{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,.2)}
+.tc-badge.done{background:var(--green-dim);color:var(--green);border-color:rgba(52,211,153,.2)}
+.tc-chevron{color:var(--text3);font-size:9px;transition:transform .2s}
+.tc-card.open .tc-chevron{transform:rotate(180deg)}
+.tc-body{display:none;padding:9px 12px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11px;color:#b0c4de}
+.tc-card.open .tc-body{display:block}
+
+/* ── Composer ────────────────────────────────────────────────────────── */
+.composer-wrap{padding:12px 22px;background:var(--bg2);border-top:1px solid var(--border)}
+.composer{max-width:760px;margin:0 auto;display:flex;align-items:flex-end;gap:9px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:9px 13px;transition:border-color .2s,box-shadow .2s}
+.composer:focus-within{border-color:rgba(30,111,217,.5);box-shadow:0 0 0 3px rgba(30,111,217,.08)}
+#inp{flex:1;background:none;border:none;outline:none;color:var(--text);font:13.5px var(--font);resize:none;max-height:130px}
+#inp::placeholder{color:var(--text3)}
+.send{width:34px;height:34px;border-radius:8px;background:var(--accent);border:none;cursor:pointer;display:grid;place-items:center;transition:all .15s;flex-shrink:0}
+.send:hover:not(:disabled){background:var(--accent2);transform:scale(1.05)}
+.send:disabled{opacity:.35;cursor:not-allowed}
+.send svg{width:15px;height:15px;fill:#fff}
+.composer-hint{max-width:760px;margin:6px auto 0;font-size:10.5px;color:var(--text3);text-align:center}
+
+/* ── Reasoning Panel ─────────────────────────────────────────────────── */
+.rp{grid-row:1/3;grid-column:3;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.rp-hd{height:var(--hdr);padding:0 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-shrink:0}
+.rp-hd-title{flex:1;font-size:12.5px;font-weight:700;color:var(--text2)}
+.rp-hd-btn{padding:3px 8px;border-radius:5px;background:none;border:1px solid var(--border);color:var(--text3);font-size:10.5px;cursor:pointer;transition:all .15s}
+.rp-hd-btn:hover{background:var(--surface2);color:var(--text2)}
+.rp-flow{padding:7px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:4px;overflow-x:auto;min-height:32px;flex-shrink:0}
+.rp-flow::-webkit-scrollbar{height:3px}
+.flow-item{display:flex;align-items:center;gap:4px}
+.flow-chip{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:var(--mono);white-space:nowrap}
+.flow-chip.intent{background:var(--accent-dim);color:var(--accent2);border:1px solid rgba(30,111,217,.2)}
+.flow-chip.agent{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.flow-chip.done{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(20,184,166,.2)}
+.flow-arrow{color:var(--text3);font-size:8px}
+.rp-scroll{flex:1;overflow-y:auto;padding:11px;display:flex;flex-direction:column;gap:7px}
+.rp-empty{text-align:center;color:var(--text3);font-size:12px;padding:32px 14px;line-height:1.9}
+.rp-empty-ic{font-size:28px;margin-bottom:10px;opacity:.4}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;animation:fadeUp .2s}
+.step-hd{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.step-badge{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--accent-dim);color:var(--accent2);border:1px solid rgba(30,111,217,.22)}
+.step-lbl{font-size:11px;color:var(--text3)}
+.fi{padding:8px 12px;border-bottom:1px solid var(--border);font-size:11.5px}
+.fi:last-child{border-bottom:none}
+.fi-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.fi-lbl.intent-c{color:var(--accent2)}.fi-lbl.agent-c{color:var(--purple)}.fi-lbl.tool-c{color:var(--amber)}.fi-lbl.done-c{color:var(--teal)}
+.fi-chip{display:inline-flex;align-items:center;font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;margin-bottom:4px}
+.fi-chip.blue{background:var(--accent-dim);color:var(--accent2);border:1px solid rgba(30,111,217,.2)}
+.fi-chip.purple{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.fi-chip.amber{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,.2)}
+.fi-chip.teal{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(20,184,166,.2)}
+.fi-detail{font-size:11px;color:var(--text3);line-height:1.5}
+.synth-card{background:var(--surface);border:1px solid rgba(20,184,166,.3);border-radius:var(--rs);overflow:hidden;animation:fadeUp .2s}
+.gateway-card{background:var(--surface);border:1px solid rgba(30,111,217,.25);border-radius:var(--rs);overflow:hidden;animation:fadeUp .2s;margin-bottom:6px}
+.gateway-card-hd{padding:8px 12px;background:var(--accent-dim);border-bottom:1px solid rgba(30,111,217,.2);font-size:11.5px;font-weight:700;color:var(--accent2);display:flex;align-items:center;gap:8px}
+.gateway-card-body{padding:8px 12px;font-size:11.5px;color:var(--text2)}
+.route-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.route-arr{color:var(--text3);font-size:10px}
+.tag{font-family:var(--mono);font-size:10px;font-weight:600;padding:1px 7px;border-radius:9px}
+.tag-b{background:var(--accent-dim);color:var(--accent2);border:1px solid rgba(59,130,246,.2)}
+.tag-p{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.tag-g{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,.2)}
+.tag-a{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,.2)}
+.synth-hd{padding:8px 12px;background:var(--teal-dim);border-bottom:1px solid rgba(20,184,166,.2);font-size:11.5px;font-weight:700;color:var(--teal);display:flex;align-items:center;gap:7px}
+.synth-body{padding:8px 12px;font-size:11.5px;color:var(--text2)}
+
+/* ── HITL Modal ──────────────────────────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;place-items:center;z-index:1000}
+.modal-overlay.show{display:grid}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:28px;max-width:520px;width:90%;animation:fadeUp .2s}
+.modal-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:9px}
+.modal-subtitle{font-size:12.5px;color:var(--text2);margin-bottom:18px}
+.modal-context{background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);padding:14px;font-size:12.5px;margin-bottom:18px;max-height:200px;overflow-y:auto}
+.modal-ctx-row{display:flex;gap:8px;margin-bottom:6px}
+.ctx-lbl{color:var(--text3);font-size:11px;width:110px;flex-shrink:0}
+.ctx-val{color:var(--text);font-size:12px;font-weight:500}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end}
+.btn{padding:9px 20px;border-radius:var(--rs);border:none;font:600 13px var(--font);cursor:pointer;transition:all .15s}
+.btn-approve{background:var(--green);color:#0a1f0a}
+.btn-approve:hover{background:#5bf0c0}
+.btn-reject{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.btn-reject:hover{background:rgba(248,113,113,.25)}
+.btn-cancel{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.btn-cancel:hover{background:var(--surface3)}
+
+/* ── Dashboard ───────────────────────────────────────────────────────── */
+#dash-panel{overflow-y:auto;padding:22px}
+.dash-wrap{max-width:1100px;margin:0 auto}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:border-color .2s}
+.stat-card:hover{border-color:var(--border2)}
+.stat-label{font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.stat-value{font-size:28px;font-weight:700;color:var(--text);line-height:1}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.stat-card.accent .stat-value{color:var(--accent2)}
+.stat-card.green  .stat-value{color:var(--green)}
+.stat-card.amber  .stat-value{color:var(--amber)}
+.stat-card.red    .stat-value{color:var(--red)}
+.section-title{font-size:13.5px;font-weight:700;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:22px}
+table{width:100%;border-collapse:collapse}
+thead{background:var(--surface2)}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border)}
+td{padding:10px 14px;font-size:12.5px;border-bottom:1px solid var(--border);color:var(--text2)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface2)}
+.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10.5px;font-weight:700}
+.badge-draft{background:var(--surface3);color:var(--text3)}
+.badge-submitted{background:var(--accent-dim);color:var(--accent2)}
+.badge-review{background:var(--amber-dim);color:var(--amber)}
+.badge-approved{background:var(--green-dim);color:var(--green)}
+.badge-rejected{background:var(--red-dim);color:var(--red)}
+.badge-disbursed{background:var(--teal-dim);color:var(--teal)}
+.prog-bar{background:var(--surface3);border-radius:10px;height:5px;overflow:hidden;width:90px}
+.prog-fill{background:var(--accent2);height:100%;border-radius:10px;transition:width .3s}
+
+/* ── Approvals ───────────────────────────────────────────────────────── */
+#appr-panel{overflow-y:auto;padding:22px}
+.appr-wrap{max-width:850px;margin:0 auto}
+.appr-card{background:var(--surface);border:1px solid rgba(251,191,36,.3);border-radius:var(--r);padding:20px;margin-bottom:16px;animation:fadeUp .2s}
+.appr-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.appr-title{font-size:14px;font-weight:700;color:var(--amber);display:flex;align-items:center;gap:8px}
+.appr-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;background:var(--bg);border-radius:var(--rs);padding:12px}
+.appr-meta-row{display:flex;flex-direction:column;gap:2px}
+.appr-meta-lbl{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase}
+.appr-meta-val{font-size:12.5px;color:var(--text);font-weight:600}
+.appr-actions{display:flex;gap:10px}
+.no-approvals{text-align:center;color:var(--text3);padding:48px;font-size:13px}
+
+/* ── Health panel ────────────────────────────────────────────────────── */
+#health-panel{overflow-y:auto;padding:22px}
+.health-wrap{max-width:800px;margin:0 auto}
+.health-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.health-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:border-color .2s}
+.health-card.up{border-color:rgba(52,211,153,.3)}
+.health-card.down{border-color:rgba(248,113,113,.3)}
+.health-svc-name{font-size:13px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.health-url{font-size:10.5px;color:var(--text3);font-family:var(--mono);margin-bottom:10px}
+.health-status{font-size:12px;font-weight:600}
+.health-card.up .health-status{color:var(--green)}
+.health-card.down .health-status{color:var(--red)}
+</style>
+</head>
+<body>
+<div class="shell" id="shell">
+
+<!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-icon">🏦</div>
+    <div>
+      <div class="brand-name">SASVA Loan Copilot</div>
+      <div class="brand-sub">BFSI Agentic AI Platform</div>
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-label">Services</div>
+    <div class="svc-row"><div class="dot" id="d-customer"></div><div><div class="svc-name">Customer Svc</div><div class="svc-val" id="v-customer">:8081</div></div></div>
+    <div class="svc-row"><div class="dot" id="d-kyc"></div><div><div class="svc-name">KYC Svc</div><div class="svc-val" id="v-kyc">:8082</div></div></div>
+    <div class="svc-row"><div class="dot" id="d-document"></div><div><div class="svc-name">Document Svc</div><div class="svc-val" id="v-document">:8083</div></div></div>
+    <div class="svc-row"><div class="dot" id="d-risk"></div><div><div class="svc-name">Risk Svc</div><div class="svc-val" id="v-risk">:8084</div></div></div>
+    <div class="svc-row"><div class="dot" id="d-workflow"></div><div><div class="svc-name">Workflow Svc</div><div class="svc-val" id="v-workflow">:8085</div></div></div>
+    <div class="svc-row"><div class="dot" id="d-loan"></div><div><div class="svc-name">Loan Svc</div><div class="svc-val" id="v-loan">:8086</div></div></div>
+    <div class="svc-row"><div class="dot" id="d-ollama"></div><div><div class="svc-name">Ollama LLM</div><div class="svc-val" id="v-ollama">:11434</div></div></div>
+  </div>
+
+  <div class="sb-section" style="border-top:1px solid var(--border);padding-top:12px">
+    <div class="sb-label">Active Agents</div>
+    <div class="agent-chip" id="ag-coordinator"><div class="agent-dot"></div><span class="agent-name">coordinator</span></div>
+    <div class="agent-chip" id="ag-customer"><div class="agent-dot"></div><span class="agent-name">customer-agent</span></div>
+    <div class="agent-chip" id="ag-risk"><div class="agent-dot"></div><span class="agent-name">risk-agent</span></div>
+    <div class="agent-chip" id="ag-document"><div class="agent-dot"></div><span class="agent-name">document-agent</span></div>
+    <div class="agent-chip" id="ag-workflow"><div class="agent-dot"></div><span class="agent-name">operations-agent</span></div>
+    <div class="agent-chip" id="ag-knowledge"><div class="agent-dot"></div><span class="agent-name">knowledge-agent</span></div>
+  </div>
+
+  <nav class="sb-nav" style="margin-top:auto;border-top:1px solid var(--border);padding-top:10px">
+    <button class="nav-btn active" id="nav-chat"     onclick="switchTab('chat')">    <span class="nav-icon">💬</span> Chat</button>
+    <button class="nav-btn"        id="nav-dash"     onclick="switchTab('dash')">    <span class="nav-icon">📊</span> Dashboard</button>
+    <button class="nav-btn"        id="nav-appr"     onclick="switchTab('appr')">    <span class="nav-icon">✅</span> Approvals <span id="appr-badge" style="display:none;margin-left:auto;font-size:9px;padding:1px 6px;border-radius:8px;background:var(--amber);color:#000;font-weight:700"></span></button>
+    <button class="nav-btn"        id="nav-health"   onclick="switchTab('health')">  <span class="nav-icon">🔧</span> System Health</button>
+  </nav>
+  <button class="new-chat" id="new-chat-btn">✦ New Conversation</button>
+</aside>
+
+<!-- ── Header ────────────────────────────────────────────────────────── -->
+<header>
+  <div class="hdr-title">Loan Onboarding Copilot <span class="live-badge">LIVE</span></div>
+  <div class="hdr-sp"></div>
+  <div class="hdr-model">Model: <b id="model-lbl">mistral</b></div>
+  <button class="rp-toggle" id="rp-toggle-btn" onclick="toggleRP()">🧠 Reasoning</button>
+</header>
+
+<!-- ── Main ──────────────────────────────────────────────────────────── -->
+<main>
+  <!-- Chat -->
+  <div class="tab-panel active" id="chat-panel">
+    <div class="chat-col">
+      <div id="chat-area">
+        <div class="msgs" id="msgs">
+          <div class="welcome" id="welcome">
+            <div class="welcome-icon">🏦</div>
+            <h2>BFSI Loan Onboarding Copilot</h2>
+            <p>Powered by LangGraph multi-agent coordination. Ask about loan applications, risk assessments, KYC status, workflow approvals, or banking policies.</p>
+            <div class="chip-grid">
+              <div class="chip" data-q="Show me all active loan applications">📋 All Loan Applications</div>
+              <div class="chip" data-q="What is the KYC status of customer ABC Logistics?">🔍 KYC Status – ABC Logistics</div>
+              <div class="chip" data-q="Give me the risk assessment for loan application 1">⚠️ Risk Assessment – Loan #1</div>
+              <div class="chip" data-q="What is the workflow progress for loan 2?">🔄 Workflow Status – Loan #2</div>
+              <div class="chip" data-q="Are there any pending loan approvals?">✅ Pending Approvals</div>
+              <div class="chip" data-q="What are the eligibility criteria for a working capital loan?">📖 Loan Eligibility Policy</div>
+              <div class="chip" data-q="Show the complete onboarding status for ABC Logistics loan">🏢 Full Onboarding – ABC Logistics</div>
+              <div class="chip" data-q="Check the document checklist for loan application 1">📄 Document Checklist – Loan #1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="composer-wrap">
+        <div class="composer">
+          <textarea id="inp" rows="1" placeholder="Ask about loans, customers, KYC, risk, workflow, or policies…"></textarea>
+          <button class="send" id="send-btn"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+        </div>
+        <div class="composer-hint">Enter to send · Shift+Enter for newline · Powered by LangGraph + Mistral + MCP</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="tab-panel" id="dash-panel">
+    <div class="dash-wrap">
+      <div class="stat-grid" id="stat-grid">
+        <div class="stat-card accent"><div class="stat-label">Total Loans</div><div class="stat-value" id="stat-total">-</div><div class="stat-sub">All applications</div></div>
+        <div class="stat-card amber"><div class="stat-label">Under Review</div><div class="stat-value" id="stat-review">-</div><div class="stat-sub">Awaiting decision</div></div>
+        <div class="stat-card green"><div class="stat-label">Approved</div><div class="stat-value" id="stat-approved">-</div><div class="stat-sub">Ready to disburse</div></div>
+        <div class="stat-card red"><div class="stat-label">Pending HITL</div><div class="stat-value" id="stat-hitl">-</div><div class="stat-sub">Human approval needed</div></div>
+      </div>
+      <div class="section-title">📋 Loan Applications</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>#</th><th>Customer</th><th>Type</th><th>Amount</th><th>Status</th><th>Progress</th><th>Officer</th></tr></thead>
+        <tbody id="loan-tbody"><tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">Loading…</td></tr></tbody></table>
+      </div>
+      <div class="section-title">👥 Customers</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>#</th><th>Company</th><th>Contact</th><th>Annual Revenue</th><th>Credit Score</th><th>Status</th></tr></thead>
+        <tbody id="cust-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approvals -->
+  <div class="tab-panel" id="appr-panel">
+    <div class="appr-wrap">
+      <div class="section-title" style="margin-bottom:18px">✅ Pending Human Approvals (HITL)</div>
+      <div id="appr-list"><div class="no-approvals">Loading approvals…</div></div>
+    </div>
+  </div>
+
+  <!-- Health -->
+  <div class="tab-panel" id="health-panel">
+    <div class="health-wrap">
+      <div class="section-title" style="margin-bottom:18px">🔧 System Health</div>
+      <div class="health-grid" id="health-grid"><div style="color:var(--text3)">Loading…</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- ── Reasoning Panel ─────────────────────────────────────────────── -->
+<aside class="rp" id="rp-panel">
+  <div class="rp-hd">
+    <div class="rp-hd-title">🧠 Agent Reasoning</div>
+    <button class="rp-hd-btn" id="rp-clear-btn">Clear</button>
+    <button class="rp-hd-btn" onclick="toggleRP()">✕</button>
+  </div>
+  <div class="rp-flow" id="rp-flow"></div>
+  <div class="rp-scroll" id="rp-scroll">
+    <div class="rp-empty" id="rp-empty"><div class="rp-empty-ic">🤖</div>Agent reasoning trace will appear here in real-time.</div>
+  </div>
+</aside>
+
+<!-- ── HITL Approval Modal ─────────────────────────────────────────── -->
+<div class="modal-overlay" id="hitl-modal">
+  <div class="modal">
+    <div class="modal-title">⚠️ Human Approval Required</div>
+    <div class="modal-subtitle">A loan application has reached the FINAL APPROVAL stage and requires your decision.</div>
+    <div class="modal-context" id="hitl-ctx"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeHitl()">Cancel</button>
+      <button class="btn btn-reject" onclick="hitlDecide('REJECT')">❌ Reject Loan</button>
+      <button class="btn btn-approve" onclick="hitlDecide('APPROVE')">✅ Approve Loan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+marked.setOptions({breaks:true,gfm:true});
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const now = () => new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const $ = id => document.getElementById(id);
+
+// ── State ─────────────────────────────────────────────────────────────
+let history = [], busy = false, rpOpen = false, currentThread = null;
+let hitlData = {}, stepCards = {}, expandStore = new Map(), resultCount = 0;
+
+// ── Tab switching ─────────────────────────────────────────────────────
+function switchTab(t) {
+  ['chat','dash','appr','health'].forEach(id => {
+    $('nav-'+id).classList.toggle('active', id===t);
+    $(id+'-panel').classList.toggle('active', id===t);
+  });
+  if (t==='dash')   loadDashboard();
+  if (t==='appr')   loadApprovals();
+  if (t==='health') loadHealth();
+}
+
+// ── Reasoning panel ───────────────────────────────────────────────────
+function toggleRP() {
+  rpOpen = !rpOpen;
+  $('shell').classList.toggle('rp-open', rpOpen);
+  $('rp-toggle-btn').classList.toggle('on', rpOpen);
+}
+function showRP() { if (!rpOpen) toggleRP(); }
+function clearRP() {
+  stepCards={}; expandStore.clear(); resultCount=0;
+  _gwCard=null; _taCard=null;
+  var sc=$('rp-scroll'), emp=$('rp-empty');
+  if(sc){ while(sc.firstChild) sc.removeChild(sc.firstChild); }
+  if(sc && emp){ sc.appendChild(emp); emp.style.display=''; }
+  var rf=$('rp-flow'); if(rf) rf.innerHTML='';
+}
+$('rp-clear-btn').onclick = clearRP;
+
+function addFlowChip(label, type) {
+  const flow = $('rp-flow');
+  if (flow.children.length) { const a=document.createElement('span'); a.className='flow-arrow'; a.textContent='→'; flow.appendChild(a); }
+  const c=document.createElement('span'); c.className='flow-chip '+type; c.textContent=label; flow.appendChild(c);
+  flow.scrollLeft=flow.scrollWidth;
+}
+
+function ensureStep(key, label) {
+  if (stepCards[key]) return stepCards[key];
+  $('rp-empty').style.display='none';
+  const card=document.createElement('div'); card.className='step-card';
+  card.innerHTML='<div class="step-hd"><span class="step-badge">'+esc(key)+'</span><span class="step-lbl">'+esc(label)+'</span></div><div class="step-body" id="sb-'+key+'"></div>';
+  $('rp-scroll').appendChild(card); stepCards[key]=card;
+  $('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+  return card;
+}
+function addFI(stepKey, labelCls, icon, labelTxt, inner) {
+  ensureStep(stepKey, labelTxt);
+  const body=document.getElementById('sb-'+stepKey);
+  const fi=document.createElement('div'); fi.className='fi';
+  fi.innerHTML='<div class="fi-lbl '+labelCls+'">'+icon+' '+labelTxt+'</div>'+inner;
+  body.appendChild(fi); $('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+}
+
+function rpIntent(intent, entities) {
+  addFI('intent','intent-c','🎯','Intent Classified',
+    '<div class="fi-chip blue">'+esc(intent)+'</div>'+
+    (Object.keys(entities).length ? '<div class="fi-detail">'+JSON.stringify(entities)+'</div>':''));
+  addFlowChip(intent,'intent');
+}
+function rpAgents(agents) {
+  addFI('agents','agent-c','🤖','Agents Selected',
+    agents.map(a=>'<div class="fi-chip purple">'+esc(a)+'-agent</div>').join(' '));
+  agents.forEach(a => addFlowChip(a,'agent'));
+  agents.forEach(a => { const el=$('ag-'+a); if(el) el.classList.add('active'); });
+}
+var _gwCard=null,_taCard=null;
+function rpGatewayConnected(url,n){
+  $('rp-empty').style.display='none';
+  _gwCard=document.createElement('div');_gwCard.className='gateway-card';
+  _gwCard.innerHTML='<div class="gateway-card-hd">🔌 MCP Gateway Connected</div>'
+    +'<div class="gateway-card-body"><div class="route-row">'
+    +'<span class="tag tag-b">Agent :8096</span><span class="route-arr">→</span>'
+    +'<span class="tag tag-b">Gateway '+esc(url)+'</span></div>'
+    +'<div style="font-size:11px;color:var(--text3);margin-top:3px">'+n+' tools across 6 MCP servers</div></div>';
+  $('rp-scroll').appendChild(_gwCard);$('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+  addFlowChip('Gateway','step');
+}
+function rpToolsAvail(tools){
+  if(!tools||!tools.length)return;
+  $('rp-empty').style.display='none';
+  _taCard=document.createElement('div');_taCard.className='gateway-card';
+  var chips=tools.slice(0,12).map(t=>'<span class="tag tag-p" style="margin:2px">'+esc(t)+'</span>').join(' ');
+  _taCard.innerHTML='<div class="gateway-card-hd">🗂️ Tools Available ('+tools.length+')</div>'
+    +'<div class="gateway-card-body" style="line-height:2.2">'+chips+'</div>';
+  $('rp-scroll').appendChild(_taCard);$('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+}
+function rpToolRoute(agent,tool,server,gateway){
+  $('rp-empty').style.display='none';
+  var c=document.createElement('div');c.className='gateway-card';
+  c.innerHTML='<div class="gateway-card-hd">🛠️ Tool Routed via Gateway</div>'
+    +'<div class="gateway-card-body"><div class="route-row">'
+    +'<span class="tag tag-b">Agent</span><span class="route-arr">→</span>'
+    +'<span class="tag tag-b">Gateway '+(gateway||'9099')+'</span><span class="route-arr">→</span>'
+    +'<span class="tag tag-p">'+(server||agent)+' MCP</span><span class="route-arr">→</span>'
+    +'<span class="tag tag-a">'+esc(tool)+'</span></div></div>';
+  $('rp-scroll').appendChild(c);$('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+  addFlowChip(tool,'tool');
+}
+function rpToolResultCard(tool,output){
+  $('rp-empty').style.display='none';
+  var preview=output.length>280?output.slice(0,280)+'…':output;
+  var id='rtr-'+Math.random().toString(36).slice(2,7);
+  if(output.length>280)expandStore.set(id,{preview,full:output.slice(0,3000)});
+  var c=document.createElement('div');c.className='gateway-card';
+  c.innerHTML='<div class="gateway-card-hd" style="color:var(--green);background:var(--green-dim);border-color:rgba(52,211,153,.2)">'
+    +'✅ Result: '+esc(tool)+'</div>'
+    +'<div class="gateway-card-body"><div class="fi-pre" id="'+id+'">'+esc(preview)+'</div>'
+    +(output.length>280?'<span class="fi-expand" data-id="'+id+'">Show more ▼</span>':'')+'</div>';
+  $('rp-scroll').appendChild(c);$('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+}
+function rpToolCall(agent,tool,server,gateway){
+  rpToolRoute(agent,tool,server,gateway);
+}
+function rpSynth(count) {
+  $('rp-empty').style.display='none';
+  const c=document.createElement('div'); c.className='synth-card';
+  c.innerHTML='<div class="synth-hd">💬 Final Synthesis</div><div class="synth-body" id="synth-body">Composing answer from '+count+' sources…</div>';
+  $('rp-scroll').appendChild(c); addFlowChip('Answer','done'); $('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+}
+
+// ── Agent sidebar highlights ──────────────────────────────────────────
+function clearAgentHighlights() {
+  ['coordinator','customer','risk','document','workflow','knowledge'].forEach(a => {
+    const el=$('ag-'+a); if(el) el.classList.remove('active');
+  });
+}
+
+// ── Chat helpers ──────────────────────────────────────────────────────
+const chatArea = $('chat-area');
+function scrollBottom() { chatArea.scrollTop=chatArea.scrollHeight; }
+
+function appendUser(text) {
+  $('welcome').style.display='none';
+  const row=document.createElement('div'); row.className='msg-row user-row';
+  row.innerHTML='<div class="av user-av">You</div><div class="msg-body"><div class="msg-meta"><span class="msg-who">You</span><span class="msg-ts">'+now()+'</span></div><div class="bubble">'+esc(text).replace(/\n/g,'<br>')+'</div></div>';
+  $('msgs').appendChild(row); scrollBottom();
+}
+function appendAiRow() {
+  const row=document.createElement('div'); row.className='msg-row ai-row';
+  row.innerHTML='<div class="av ai-av">AI</div><div class="msg-body"><div class="msg-meta"><span class="msg-who">SASVA AI</span><span class="msg-ts">'+now()+'</span></div><div class="ai-inner"></div></div>';
+  $('msgs').appendChild(row); scrollBottom();
+  return row.querySelector('.ai-inner');
+}
+function makeThinking(text) {
+  const d=document.createElement('div'); d.className='thinking';
+  d.innerHTML='<div class="dots"><div class="dot-ani"></div><div class="dot-ani"></div><div class="dot-ani"></div></div><span class="thinking-text">'+esc(text)+'</span>';
+  return d;
+}
+function makeToolCard(agent, tool) {
+  const card=document.createElement('div'); card.className='tc-card';
+  card.innerHTML='<div class="tc-hd"><span class="tc-agent">'+esc(agent)+'</span><span class="tc-tool">'+esc(tool)+'</span><span class="tc-badge">running…</span><span class="tc-chevron">▼</span></div><div class="tc-body"></div>';
+  card.querySelector('.tc-hd').onclick = () => card.classList.toggle('open');
+  return card;
+}
+
+// ── Main ask ──────────────────────────────────────────────────────────
+async function ask(text) {
+  text=text.trim(); if(!text||busy) return;
+  busy=true; $('send-btn').disabled=true;
+  try{clearRP();}catch(e){console.error('clearRP:',e);}
+  try{showRP();}catch(e){}
+  try{clearAgentHighlights();}catch(e){}
+  $('ag-coordinator').classList.add('active');
+
+  appendUser(text);
+  history.push({role:'user',content:text});
+
+  const aiInner=appendAiRow();
+  const trace=document.createElement('div'); trace.className='agent-trace'; aiInner.appendChild(trace);
+  let thinkingEl=makeThinking('Connecting to agents…'); aiInner.appendChild(thinkingEl);
+
+  let openCard=null; resultCount=0;
+  const thread=currentThread||(currentThread=crypto.randomUUID());
+
+  try {
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:history,thread_id:thread})});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+
+    const reader=res.body.getReader(); const dec=new TextDecoder(); let buf='';
+    while(true) {
+      const{value,done}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n'); buf=lines.pop();
+      for(const line of lines) {
+        if(!line.trim()) continue;
+        let ev;
+        try{
+          // SSE: lines start with "data: "
+          const raw=line.startsWith('data:')?line.slice(5).trim():line.trim();
+          ev=JSON.parse(raw);
+        }catch{continue}
+
+        try{
+        if(ev.type==='gateway_connected'){
+          rpGatewayConnected(ev.url,ev.tools_count);
+
+        }else if(ev.type==='tools_available'){
+          rpToolsAvail(ev.tools||[]);
+
+        }else if(ev.type==='tool_result'){
+          resultCount++;
+          if(openCard){var b=openCard.querySelector('.tc-badge');if(b){b.textContent='done';b.classList.add('done');}openCard=null;}
+          rpToolResultCard(ev.tool,ev.output||'');
+          scrollBottom();
+
+        }else if(ev.type==='status') {
+
+          thinkingEl.querySelector('.thinking-text').textContent=ev.text;
+          if(ev.text.includes('synthesize')) rpSynth(resultCount);
+
+        }else if(ev.type==='intent') {
+          rpIntent(ev.intent,ev.entities||{});
+
+        }else if(ev.type==='agents_selected') {
+          rpAgents(ev.agents||[]);
+
+        }else if(ev.type==='tool_call') {
+          resultCount++;
+          const card=makeToolCard(ev.agent,ev.tool); trace.appendChild(card); openCard=card;
+          rpToolCall(ev.agent,ev.tool,ev.server,ev.gateway);
+          thinkingEl.querySelector('.thinking-text').textContent='Running '+ev.agent+' → '+ev.tool+'…';
+          scrollBottom();
+
+        }else if(ev.type==='hitl_required') {
+          hitlData={stepId:ev.step_id,context:ev.context,threadId:ev.thread_id||thread};
+          showHitlModal(ev.context);
+
+        }else if(ev.type==='final') {
+          if(openCard){openCard.querySelector('.tc-badge').textContent='done';openCard.querySelector('.tc-badge').classList.add('done');}
+          thinkingEl.remove();
+          const synth=document.getElementById('synth-body');
+          if(synth) synth.textContent='✅ Answer composed from '+resultCount+' sources';
+          const ans=document.createElement('div'); ans.className='bubble'; ans.innerHTML=marked.parse(ev.text);
+          aiInner.appendChild(ans);
+          history.push({role:'assistant',content:ev.text});
+          clearAgentHighlights();
+          scrollBottom();
+
+        }else if(ev.type==='error') {
+          thinkingEl.remove();
+          const err=document.createElement('div'); err.className='err-bubble'; err.innerHTML='⚠️ '+esc(ev.text);
+          aiInner.appendChild(err); scrollBottom();
+        }
+        }catch(dispatchErr){console.error('Event dispatch error:',dispatchErr,ev);}
+      }
+    }
+  }catch(e){
+    console.error('ask error:',e);
+    try{thinkingEl.remove();}catch(_){}
+    try{
+      var eb=document.createElement('div');
+      eb.className='err-bubble';
+      eb.innerHTML='&#9888; Error: '+esc(String(e));
+      aiInner.appendChild(eb); scrollBottom();
+    }catch(_){}
+  }
+  busy=false; $('send-btn').disabled=false; $('inp').focus();
+}
+
+// ── HITL modal ────────────────────────────────────────────────────────
+function showHitlModal(ctx) {
+  const step=ctx&&ctx.step||{};
+  $('hitl-ctx').innerHTML='<div class="modal-ctx-row"><span class="ctx-lbl">Loan ID</span><span class="ctx-val">'+(ctx&&ctx.loan_id||'—')+'</span></div>'+
+    '<div class="modal-ctx-row"><span class="ctx-lbl">Customer ID</span><span class="ctx-val">'+(ctx&&ctx.customer_id||'—')+'</span></div>'+
+    '<div class="modal-ctx-row"><span class="ctx-lbl">Step</span><span class="ctx-val">'+(step.stepName||'FINAL_APPROVAL')+'</span></div>'+
+    '<div class="modal-ctx-row"><span class="ctx-lbl">Step ID</span><span class="ctx-val">'+(step.id||'—')+'</span></div>'+
+    '<div class="modal-ctx-row"><span class="ctx-lbl">Description</span><span class="ctx-val">'+(step.stepDescription||'Senior officer final approval required')+'</span></div>';
+  $('hitl-modal').classList.add('show');
+}
+function closeHitl() { $('hitl-modal').classList.remove('show'); }
+async function hitlDecide(decision) {
+  closeHitl();
+  if(hitlData.stepId) {
+    await fetch('/api/'+(decision==='APPROVE'?'approve':'reject')+'/'+hitlData.stepId,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({approver:'LOAN_OFFICER',loan_id:hitlData.context&&hitlData.context.loan_id,
+                           reason:decision==='REJECT'?'Rejected after review':undefined})});
+  }
+  if(hitlData.threadId) {
+    // Resume LangGraph
+    const res=await fetch('/api/resume/'+hitlData.threadId,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({decision:decision})});
+    const reader=res.body.getReader(); const dec=new TextDecoder(); let buf='';
+    const aiInner=appendAiRow();
+    let thinkEl=makeThinking('Processing '+decision+'…'); aiInner.appendChild(thinkEl);
+    while(true){
+      const{value,done}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n'); buf=lines.pop();
+      for(const line of lines){
+        let ev; try{const raw=line.startsWith('data:')?line.slice(5).trim():line.trim();ev=JSON.parse(raw);}catch{continue}
+        if(ev.type==='final'){thinkEl.remove();const a=document.createElement('div');a.className='bubble';a.innerHTML=marked.parse(ev.text);aiInner.appendChild(a);scrollBottom();}
+      }
+    }
+  }
+  loadApprovals();
+}
+
+// ── Composer wiring ───────────────────────────────────────────────────
+$('send-btn').onclick=()=>{const v=$('inp').value;$('inp').value='';$('inp').style.height='auto';ask(v)};
+$('inp').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('send-btn').click()}});
+$('inp').addEventListener('input',()=>{$('inp').style.height='auto';$('inp').style.height=Math.min($('inp').scrollHeight,130)+'px'});
+$('msgs').addEventListener('click',e=>{const c=e.target.closest('.chip');if(c){$('inp').value=c.dataset.q;$('send-btn').click()}});
+$('new-chat-btn').onclick=()=>{history=[];currentThread=null;$('msgs').innerHTML='';$('msgs').appendChild($('welcome'));$('welcome').style.display='';clearRP();$('inp').focus()};
+
+// ── Health polling ────────────────────────────────────────────────────
+async function pollHealth() {
+  try{
+    const h=await fetch('/api/health').then(r=>r.json());
+    const svcs=['customer','kyc','document','risk','workflow','loan'];
+    svcs.forEach(s=>{
+      const up=h[s]&&h[s].status==='UP';
+      $('d-'+s).className='dot '+(up?'up':'down');
+      $('v-'+s).textContent=up?'UP':'DOWN';
+    });
+    const oll=h.ollama&&h.ollama.status==='UP';
+    $('d-ollama').className='dot '+(oll?'up':'down');
+    $('v-ollama').textContent=oll?'UP':'DOWN';
+    $('model-lbl').textContent=(h.ollama&&h.ollama.models&&h.ollama.models.find(m=>m.includes('mistral')))||'mistral';
+  }catch(e){console.warn('Health check failed',e)}
+}
+pollHealth(); setInterval(pollHealth,30000);
+
+// ── Dashboard ─────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const[loans,customers]=await Promise.all([fetch('/api/loans').then(r=>r.json()),fetch('/api/customers').then(r=>r.json())]).catch(()=>[[],[]]);
+  $('stat-total').textContent=loans.length||'-';
+  $('stat-review').textContent=loans.filter(l=>l.status==='UNDER_REVIEW').length||0;
+  $('stat-approved').textContent=loans.filter(l=>l.status==='APPROVED').length||0;
+
+  const approvals=await fetch('/api/approvals').then(r=>r.json()).catch(()=>[]);
+  const hitlCount=approvals.length;
+  $('stat-hitl').textContent=hitlCount||0;
+  const apprBadge=$('appr-badge');
+  if(hitlCount>0){apprBadge.textContent=hitlCount;apprBadge.style.display='';}else{apprBadge.style.display='none';}
+
+  const statusBadge=s=>{const map={DRAFT:'badge-draft',SUBMITTED:'badge-submitted',UNDER_REVIEW:'badge-review',APPROVED:'badge-approved',REJECTED:'badge-rejected',DISBURSED:'badge-disbursed'};return '<span class="badge '+(map[s]||'badge-draft')+'">'+esc(s||'-')+'</span>';};
+  const prog=pct=>'<div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div>';
+  const statusPct={DRAFT:5,SUBMITTED:20,UNDER_REVIEW:50,APPROVED:85,DISBURSED:100,REJECTED:0};
+
+  $('loan-tbody').innerHTML=loans.map(l=>'<tr><td>#'+l.id+'</td><td style="color:var(--text)">Cust #'+l.customerId+'</td><td>'+esc(l.loanType||'-')+'</td><td style="color:var(--green)">$'+(l.amount?Number(l.amount).toLocaleString():'-')+'</td><td>'+statusBadge(l.status)+'</td><td>'+prog(statusPct[l.status]||0)+'</td><td style="font-size:11px;color:var(--text3)">'+esc(l.assignedOfficer||'Unassigned')+'</td></tr>').join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3)">No loans found</td></tr>';
+
+  $('cust-tbody').innerHTML=customers.map(c=>'<tr><td>#'+c.id+'</td><td style="color:var(--text);font-weight:600">'+esc(c.companyName||'-')+'</td><td style="font-size:11.5px">'+esc((c.firstName||'')+' '+(c.lastName||''))+'</td><td style="color:var(--green)">$'+(c.annualRevenue?Number(c.annualRevenue).toLocaleString():'-')+'</td><td style="color:'+(c.creditScore>=700?'var(--green)':c.creditScore>=650?'var(--amber)':'var(--red)')+'">'+esc(c.creditScore||'-')+'</td><td><span class="badge '+(c.status==='ACTIVE'?'badge-approved':'badge-rejected')+'">'+esc(c.status||'-')+'</span></td></tr>').join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text3)">No customers found</td></tr>';
+}
+
+// ── Approvals ─────────────────────────────────────────────────────────
+async function loadApprovals() {
+  const approvals=await fetch('/api/approvals').then(r=>r.json()).catch(()=>[]);
+  if(!approvals.length){$('appr-list').innerHTML='<div class="no-approvals">✅ No pending approvals — all workflows are up to date.</div>';return;}
+  $('appr-list').innerHTML=approvals.map(w=>'<div class="appr-card"><div class="appr-hd"><div class="appr-title">⏳ Loan #'+w.loanApplicationId+' – Final Approval</div></div><div class="appr-meta"><div class="appr-meta-row"><div class="appr-meta-lbl">Loan ID</div><div class="appr-meta-val">#'+w.loanApplicationId+'</div></div><div class="appr-meta-row"><div class="appr-meta-lbl">Customer ID</div><div class="appr-meta-val">#'+w.customerId+'</div></div><div class="appr-meta-row"><div class="appr-meta-lbl">Current Step</div><div class="appr-meta-val">'+esc(w.currentStep||'FINAL_APPROVAL')+'</div></div><div class="appr-meta-row"><div class="appr-meta-lbl">Assigned To</div><div class="appr-meta-val">'+esc(w.assignedOfficer||'—')+'</div></div></div><div class="appr-actions"><button class="btn btn-reject" onclick="quickReject('+w.loanApplicationId+')">❌ Reject</button><button class="btn btn-approve" onclick="quickApprove('+w.loanApplicationId+')">✅ Approve</button></div></div>').join('');
+}
+async function quickApprove(loanId) {
+  const wf=await fetch('/api/workflows').then(r=>r.json()).catch(()=>[]);
+  const w=wf.find(x=>x.loanApplicationId==loanId);
+  if(w){
+    const steps=await fetch('/api/v1/workflows/'+w.id+'/steps').then(r=>r.json()).catch(()=>[]);
+    const step=steps.find(s=>s.status==='AWAITING_APPROVAL');
+    if(step){await fetch('/api/approve/'+step.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approver:'LOAN_OFFICER',loan_id:loanId})});}
+  }
+  loadApprovals(); loadDashboard();
+}
+async function quickReject(loanId) {
+  const reason=prompt('Rejection reason:'); if(!reason) return;
+  const wf=await fetch('/api/workflows').then(r=>r.json()).catch(()=>[]);
+  const w=wf.find(x=>x.loanApplicationId==loanId);
+  if(w){
+    const steps=await fetch('/api/v1/workflows/'+w.id+'/steps').then(r=>r.json()).catch(()=>[]);
+    const step=steps.find(s=>s.status==='AWAITING_APPROVAL');
+    if(step){await fetch('/api/reject/'+step.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rejector:'LOAN_OFFICER',reason:reason,loan_id:loanId})});}
+  }
+  loadApprovals(); loadDashboard();
+}
+
+// ── Health panel ──────────────────────────────────────────────────────
+const SVC_PORTS={customer:'8081',kyc:'8082',document:'8083',risk:'8084',workflow:'8085',loan:'8086',ollama:'11434'};
+async function loadHealth() {
+  const h=await fetch('/api/health').then(r=>r.json()).catch(()=>({}));
+  $('health-grid').innerHTML=Object.entries(h).map(([name,info])=>{
+    const up=info.status==='UP';
+    return '<div class="health-card '+(up?'up':'down')+'"><div class="health-svc-name">'+(up?'🟢':'🔴')+' '+esc(name.toUpperCase())+' Service</div><div class="health-url">localhost:'+(SVC_PORTS[name]||'—')+'</div><div class="health-status">'+(up?'● ONLINE':'● OFFLINE')+'</div>'+(info.models?'<div style="font-size:10.5px;color:var(--text3);margin-top:6px">Models: '+info.models.slice(0,3).join(', ')+'</div>':'')+'</div>';
+  }).join('');
+}
+
+$('inp').focus();
+</script>
+</body>
+</html>
