@@ -30,29 +30,76 @@ AUDIT_LOG: list[dict] = []
 gw = FastAPI(title="MCP Gateway", version="1.0.0")
 
 
-async def _list_tools(server_url: str) -> list[dict]:
-    try:
-        async with sse_client(server_url) as (r, w):
-            async with ClientSession(r, w) as session:
-                await session.initialize()
-                result = await session.list_tools()
-                return [
-                    {"name": t.name, "description": t.description,
-                     "inputSchema": t.inputSchema}
-                    for t in result.tools
-                ]
-    except Exception as e:
-        log.warning(f"Could not reach {server_url}: {e}")
-        return []
+async def _list_tools(server_url: str, retries: int = 2) -> list[dict]:
+    """List tools from an MCP server with retries and defensive API handling."""
+    last_err = None
+    for attempt in range(retries + 1):
+        try:
+            async with sse_client(server_url) as (r, w):
+                async with ClientSession(r, w) as session:
+                    await session.initialize()
+                    result = await session.list_tools()
+
+                    # Defensive: handle both list and ListToolsResult responses
+                    tools_raw = (
+                        result.tools if hasattr(result, "tools")
+                        else result      if isinstance(result, list)
+                        else []
+                    )
+                    out = []
+                    for t in tools_raw:
+                        # inputSchema may be camelCase or snake_case depending on version
+                        schema = (
+                            t.inputSchema  if hasattr(t, "inputSchema")
+                            else t.input_schema if hasattr(t, "input_schema")
+                            else {}
+                        )
+                        out.append({
+                            "name":        t.name,
+                            "description": getattr(t, "description", "") or "",
+                            "inputSchema": schema,
+                        })
+                    return out
+        except Exception as e:
+            last_err = e
+            if attempt < retries:
+                await asyncio.sleep(1.0 * (attempt + 1))   # back-off
+                log.warning(f"_list_tools retry {attempt+1}/{retries} for {server_url}: {e}")
+    log.warning(f"Could not reach {server_url} after {retries+1} attempts: {last_err}")
+    return []
 
 
 async def _call_tool(server_url: str, tool_name: str,
-                     arguments: dict) -> str:
-    async with sse_client(server_url) as (r, w):
-        async with ClientSession(r, w) as session:
-            await session.initialize()
-            result = await session.call_tool(tool_name, arguments=arguments)
-            return result.content[0].text if result.content else "null"
+                     arguments: dict, retries: int = 2) -> str:
+    """Call a tool on an MCP server with retries and defensive content handling."""
+    last_err = None
+    for attempt in range(retries + 1):
+        try:
+            async with sse_client(server_url) as (r, w):
+                async with ClientSession(r, w) as session:
+                    await session.initialize()
+                    result = await session.call_tool(tool_name, arguments=arguments)
+
+                    # Defensive: handle different content structures across MCP versions
+                    content = getattr(result, "content", None)
+                    if not content:
+                        return "null"
+                    first = content[0]
+                    # TextContent has .text; some versions wrap it differently
+                    if hasattr(first, "text"):
+                        return first.text
+                    if isinstance(first, dict):
+                        return first.get("text", json.dumps(first))
+                    return str(first)
+        except Exception as e:
+            last_err = e
+            if attempt < retries:
+                await asyncio.sleep(1.0 * (attempt + 1))
+                log.warning(f"_call_tool retry {attempt+1}/{retries} "
+                            f"[{tool_name}@{server_url}]: {e}")
+    raise RuntimeError(
+        f"Tool '{tool_name}' failed after {retries+1} attempts: {last_err}"
+    )
 
 
 @gw.get("/health")

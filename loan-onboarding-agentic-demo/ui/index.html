@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SASVA · BFSI Loan Onboarding Copilot</title>
+<title>Integra Loan Agent</title>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -162,9 +162,22 @@ main{grid-column:2;overflow:hidden;display:flex;flex-direction:column}
 .rp-empty{text-align:center;color:var(--text3);font-size:12px;padding:32px 14px;line-height:1.9}
 .rp-empty-ic{font-size:28px;margin-bottom:10px;opacity:.4}
 .step-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;animation:fadeUp .2s}
-.step-hd{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.step-hd{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;transition:background .15s}
+.step-hd:hover{filter:brightness(1.15)}
+.step-toggle{margin-left:auto;font-size:11px;color:var(--text3);transition:transform .2s;flex-shrink:0}
+.step-card.collapsed .step-toggle{transform:rotate(-90deg)}
+.step-card.collapsed .step-body{display:none}
 .step-badge{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--accent-dim);color:var(--accent2);border:1px solid rgba(30,111,217,.22)}
-.step-lbl{font-size:11px;color:var(--text3)}
+.step-badge.badge-classify{background:var(--accent-dim);color:var(--accent2)}
+.step-badge.badge-select{background:var(--purple-dim);color:var(--purple)}
+.step-badge.badge-execute{background:var(--amber-dim);color:var(--amber)}
+.step-badge.badge-synthesize{background:var(--teal-dim);color:var(--teal)}
+.step-badge.badge-hitl{background:#3b1f1f;color:#f87171}
+.step-status{font-size:10px;padding:1px 6px;border-radius:8px;margin-left:2px}
+.step-status.running{background:#1a3a1a;color:#4ade80;animation:pulse 1.2s infinite}
+.step-status.done{background:#162616;color:#86efac}
+.step-lbl{font-size:11.5px;font-weight:600;color:var(--text2)}
+.step-summary{font-size:10px;color:var(--text3);margin-left:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
 .fi{padding:8px 12px;border-bottom:1px solid var(--border);font-size:11.5px}
 .fi:last-child{border-bottom:none}
 .fi-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;margin-bottom:5px;display:flex;align-items:center;gap:5px}
@@ -175,6 +188,10 @@ main{grid-column:2;overflow:hidden;display:flex;flex-direction:column}
 .fi-chip.amber{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,.2)}
 .fi-chip.teal{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(20,184,166,.2)}
 .fi-detail{font-size:11px;color:var(--text3);line-height:1.5}
+.cot-block{font-size:11px;color:var(--text3);line-height:1.7;margin-top:6px;padding:7px 10px;background:var(--surface2);border-radius:5px;border-left:2px solid var(--border)}
+.cot-kv{display:inline-flex;align-items:center;gap:4px;margin:1px 4px 1px 0}
+.cot-k{color:var(--text3);font-size:10.5px}
+.cot-v{font-family:var(--mono);font-size:10.5px;color:var(--accent2);background:var(--accent-dim);padding:1px 5px;border-radius:3px}
 .synth-card{background:var(--surface);border:1px solid rgba(20,184,166,.3);border-radius:var(--rs);overflow:hidden;animation:fadeUp .2s}
 .gateway-card{background:var(--surface);border:1px solid rgba(30,111,217,.25);border-radius:var(--rs);overflow:hidden;animation:fadeUp .2s;margin-bottom:6px}
 .gateway-card-hd{padding:8px 12px;background:var(--accent-dim);border-bottom:1px solid rgba(30,111,217,.2);font-size:11.5px;font-weight:700;color:var(--accent2);display:flex;align-items:center;gap:8px}
@@ -274,7 +291,7 @@ tbody tr:hover td{background:var(--surface2)}
   <div class="brand">
     <div class="brand-icon">🏦</div>
     <div>
-      <div class="brand-name">SASVA Loan Copilot</div>
+      <div class="brand-name">Integra Loan Agent</div>
       <div class="brand-sub">BFSI Agentic AI Platform</div>
     </div>
   </div>
@@ -488,14 +505,60 @@ function addFlowChip(label, type) {
   flow.scrollLeft=flow.scrollWidth;
 }
 
+const STEP_META={
+  intent:    {icon:"🎯", label:"Classify Intent",   badge:"badge-classify"},
+  agents:    {icon:"🤖", label:"Select Agents",     badge:"badge-select"},
+  gateway:   {icon:"🔌", label:"Gateway Connect",   badge:"badge-execute"},
+  tools:     {icon:"🗂️", label:"Tools Available",   badge:"badge-execute"},
+  tool_route:{icon:"🛠️", label:"Tool Routing",      badge:"badge-execute"},
+  tool_result:{icon:"✅",label:"Tool Result",       badge:"badge-execute"},
+  synthesize:{icon:"💬", label:"Synthesize Answer", badge:"badge-synthesize"},
+  hitl:      {icon:"⚠️", label:"Approval Required", badge:"badge-hitl"},
+};
 function ensureStep(key, label) {
   if (stepCards[key]) return stepCards[key];
   $('rp-empty').style.display='none';
-  const card=document.createElement('div'); card.className='step-card';
-  card.innerHTML='<div class="step-hd"><span class="step-badge">'+esc(key)+'</span><span class="step-lbl">'+esc(label)+'</span></div><div class="step-body" id="sb-'+key+'"></div>';
-  $('rp-scroll').appendChild(card); stepCards[key]=card;
+  const meta=STEP_META[key]||{icon:"⚙️",label:label,badge:""};
+  const card=document.createElement('div');
+  card.className='step-card';
+  card.innerHTML=
+    '<div class="step-hd" onclick="toggleStep(this)">'
+    +'<span style="font-size:14px">'+meta.icon+'</span>'
+    +'<span class="step-badge '+meta.badge+'">'+esc(key)+'</span>'
+    +'<span class="step-lbl">'+esc(meta.label)+'</span>'
+    +'<span class="step-status running" id="ss-'+key+'">● running</span>'
+    +'<span class="step-toggle">▾</span>'
+    +'</div>'
+    +'<div class="step-body" id="sb-'+key+'"></div>';
+  $('rp-scroll').appendChild(card);
+  stepCards[key]=card;
   $('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
   return card;
+}
+function toggleStep(hd) {
+  const card=hd.closest('.step-card');
+  card.classList.toggle('collapsed');
+}
+function markStepDone(key, summary) {
+  const ss=$('ss-'+key);
+  if(ss){ss.className='step-status done';ss.textContent='✓ done';}
+  const card=stepCards[key];
+  if(card&&summary){
+    let sm=card.querySelector('.step-summary');
+    if(!sm){sm=document.createElement('span');sm.className='step-summary';card.querySelector('.step-hd').insertBefore(sm,card.querySelector('.step-toggle'));}
+    sm.textContent=' — '+summary;
+  }
+    // auto-collapse completed steps after 1.5s
+  if(card) setTimeout(()=>{ if(!card.classList.contains('collapsed')) card.classList.add('collapsed'); },1500);
+}
+// Mark every still-running step as done — called on final/error events
+function markAllRunningStepsDone(label) {
+  Object.keys(stepCards).forEach(key => {
+    const ss = $('ss-'+key);
+    if (ss && ss.classList.contains('running')) {
+      markStepDone(key, label||'complete');
+    }
+  });
 }
 function addFI(stepKey, labelCls, icon, labelTxt, inner) {
   ensureStep(stepKey, labelTxt);
@@ -506,70 +569,81 @@ function addFI(stepKey, labelCls, icon, labelTxt, inner) {
 }
 
 function rpIntent(intent, entities) {
+  const entHtml=Object.keys(entities).length
+    ? '<div class="fi-detail cot-block"><strong>Entities extracted:</strong><br>'
+      +Object.entries(entities).map(([k,v])=>'<span class="cot-kv"><span class="cot-k">'+esc(k)+'</span>: <span class="cot-v">'+esc(String(v))+'</span></span>').join(' ')+'</div>'
+    : '<div class="fi-detail cot-block" style="color:var(--text3)">No specific entities extracted — fetching all records</div>';
   addFI('intent','intent-c','🎯','Intent Classified',
-    '<div class="fi-chip blue">'+esc(intent)+'</div>'+
-    (Object.keys(entities).length ? '<div class="fi-detail">'+JSON.stringify(entities)+'</div>':''));
+    '<div class="fi-chip blue">'+esc(intent)+'</div>'+entHtml);
+  markStepDone('intent', intent);
   addFlowChip(intent,'intent');
 }
 function rpAgents(agents) {
+  const cotHtml='<div class="cot-block"><strong>Routing decision:</strong><br>'
+    +'Intent mapped to agent(s) via INTENT_AGENT_MAP<br>'
+    +agents.map(a=>'<span class="cot-kv"><span class="cot-k">▸</span> <span class="cot-v">'+esc(a)+'-mcp</span></span>').join('')+'</div>';
   addFI('agents','agent-c','🤖','Agents Selected',
-    agents.map(a=>'<div class="fi-chip purple">'+esc(a)+'-agent</div>').join(' '));
+    '<div style="display:flex;flex-wrap:wrap;gap:4px">'+agents.map(a=>'<div class="fi-chip purple">'+esc(a)+'</div>').join('')+ '</div>'+cotHtml);
+  markStepDone('agents', agents.join(', '));
   agents.forEach(a => addFlowChip(a,'agent'));
   agents.forEach(a => { const el=$('ag-'+a); if(el) el.classList.add('active'); });
 }
 var _gwCard=null,_taCard=null;
 function rpGatewayConnected(url,n){
-  $('rp-empty').style.display='none';
-  _gwCard=document.createElement('div');_gwCard.className='gateway-card';
-  _gwCard.innerHTML='<div class="gateway-card-hd">🔌 MCP Gateway Connected</div>'
-    +'<div class="gateway-card-body"><div class="route-row">'
-    +'<span class="tag tag-b">Agent :8096</span><span class="route-arr">→</span>'
-    +'<span class="tag tag-b">Gateway '+esc(url)+'</span></div>'
-    +'<div style="font-size:11px;color:var(--text3);margin-top:3px">'+n+' tools across 6 MCP servers</div></div>';
-  $('rp-scroll').appendChild(_gwCard);$('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+  const cotHtml='<div class="cot-block"><strong>Connection established:</strong><br>'
+    +'Agent Server → MCP Gateway<br>'
+    +'<span class="cot-kv"><span class="cot-k">URL:</span> <span class="cot-v">'+esc(url)+'</span></span><br>'
+    +'<span class="cot-kv"><span class="cot-k">Tools:</span> <span class="cot-v">'+n+' tools available across MCP servers</span></span></div>';
+  addFI('gateway','tool-c','🔌','MCP Gateway Connected', cotHtml);
+  markStepDone('gateway', n+' tools');
   addFlowChip('Gateway','step');
 }
 function rpToolsAvail(tools){
   if(!tools||!tools.length)return;
-  $('rp-empty').style.display='none';
-  _taCard=document.createElement('div');_taCard.className='gateway-card';
-  var chips=tools.slice(0,12).map(t=>'<span class="tag tag-p" style="margin:2px">'+esc(t)+'</span>').join(' ');
-  _taCard.innerHTML='<div class="gateway-card-hd">🗂️ Tools Available ('+tools.length+')</div>'
-    +'<div class="gateway-card-body" style="line-height:2.2">'+chips+'</div>';
-  $('rp-scroll').appendChild(_taCard);$('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+  const chips=tools.slice(0,16).map(t=>'<span class="fi-chip amber">'+esc(t)+'</span>').join(' ');
+  const more=tools.length>16?'<div class="fi-detail" style="margin-top:4px">… and '+(tools.length-16)+' more</div>':''; 
+  addFI('tools','tool-c','🗂️','Available Tools ('+tools.length+')',
+    '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px">'+chips+'</div>'+more);
+  markStepDone('tools', tools.length+' tools');
 }
 function rpToolRoute(agent,tool,server,gateway){
-  $('rp-empty').style.display='none';
-  var c=document.createElement('div');c.className='gateway-card';
-  c.innerHTML='<div class="gateway-card-hd">🛠️ Tool Routed via Gateway</div>'
-    +'<div class="gateway-card-body"><div class="route-row">'
-    +'<span class="tag tag-b">Agent</span><span class="route-arr">→</span>'
-    +'<span class="tag tag-b">Gateway '+(gateway||'9099')+'</span><span class="route-arr">→</span>'
-    +'<span class="tag tag-p">'+(server||agent)+' MCP</span><span class="route-arr">→</span>'
-    +'<span class="tag tag-a">'+esc(tool)+'</span></div></div>';
-  $('rp-scroll').appendChild(c);$('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+  const cotHtml='<div class="cot-block">'
+    +'<strong>Chain of thought:</strong><br>'
+    +'Selected agent <span class="cot-v">'+esc(agent)+'</span> → '
+    +'POST /call/'+esc(tool)+' to gateway<br>'
+    +'Gateway routes by domain → '
+    +'<span class="cot-v">'+(server||agent)+'-mcp</span><br>'
+    +'MCP server executes tool → Spring Boot service</div>';
+  const routeHtml='<div class="route-row" style="flex-wrap:wrap;gap:4px">'
+    +'<span class="tag tag-b">coordinator</span><span class="route-arr">→</span>'
+    +'<span class="tag tag-b">gateway</span><span class="route-arr">→</span>'
+    +'<span class="tag tag-p">'+(server||agent)+'-mcp</span><span class="route-arr">→</span>'
+    +'<span class="tag tag-a">'+esc(tool)+'()</span></div>';
+  addFI('tool_route','tool-c','🛠️',esc(tool), routeHtml+cotHtml);
   addFlowChip(tool,'tool');
 }
 function rpToolResultCard(tool,output){
-  $('rp-empty').style.display='none';
-  var preview=output.length>280?output.slice(0,280)+'…':output;
+  var preview=output.length>300?output.slice(0,300)+'…':output;
   var id='rtr-'+Math.random().toString(36).slice(2,7);
-  if(output.length>280)expandStore.set(id,{preview,full:output.slice(0,3000)});
-  var c=document.createElement('div');c.className='gateway-card';
-  c.innerHTML='<div class="gateway-card-hd" style="color:var(--green);background:var(--green-dim);border-color:rgba(52,211,153,.2)">'
-    +'✅ Result: '+esc(tool)+'</div>'
-    +'<div class="gateway-card-body"><div class="fi-pre" id="'+id+'">'+esc(preview)+'</div>'
-    +(output.length>280?'<span class="fi-expand" data-id="'+id+'">Show more ▼</span>':'')+'</div>';
-  $('rp-scroll').appendChild(c);$('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+  if(output.length>300)expandStore.set(id,{preview,full:output.slice(0,4000)});
+  const inner='<div class="cot-block" style="background:var(--green-dim);border-color:rgba(52,211,153,.2)">'
+    +'<strong style="color:var(--green)">Tool returned:</strong><br>'
+    +'<div class="fi-pre" id="'+id+'">'+esc(preview)+'</div>'
+    +(output.length>300?'<span class="fi-expand" data-id="'+id+'">Show full response ▼</span>':'')
+    +'</div>';
+  addFI('tool_result','done-c','✅','Result: '+esc(tool), inner);
+  markStepDone('tool_result', esc(tool)+' responded');
 }
 function rpToolCall(agent,tool,server,gateway){
   rpToolRoute(agent,tool,server,gateway);
 }
 function rpSynth(count) {
-  $('rp-empty').style.display='none';
-  const c=document.createElement('div'); c.className='synth-card';
-  c.innerHTML='<div class="synth-hd">💬 Final Synthesis</div><div class="synth-body" id="synth-body">Composing answer from '+count+' sources…</div>';
-  $('rp-scroll').appendChild(c); addFlowChip('Answer','done'); $('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
+  const cotHtml='<div class="cot-block">'
+    +'<strong>Synthesizing from '+count+' data source'+(count!==1?'s':'')+':</strong><br>'
+    +'Formatting tool results into structured markdown response…</div>';
+  addFI('synthesize','done-c','💬','Final Synthesis', cotHtml);
+  addFlowChip('Answer','done');
+  $('rp-scroll').scrollTop=$('rp-scroll').scrollHeight;
 }
 
 // ── Agent sidebar highlights ──────────────────────────────────────────
@@ -591,7 +665,7 @@ function appendUser(text) {
 }
 function appendAiRow() {
   const row=document.createElement('div'); row.className='msg-row ai-row';
-  row.innerHTML='<div class="av ai-av">AI</div><div class="msg-body"><div class="msg-meta"><span class="msg-who">SASVA AI</span><span class="msg-ts">'+now()+'</span></div><div class="ai-inner"></div></div>';
+  row.innerHTML='<div class="av ai-av">AI</div><div class="msg-body"><div class="msg-meta"><span class="msg-who">Integra</span><span class="msg-ts">'+now()+'</span></div><div class="ai-inner"></div></div>';
   $('msgs').appendChild(row); scrollBottom();
   return row.querySelector('.ai-inner');
 }
@@ -657,6 +731,7 @@ async function ask(text) {
         }else if(ev.type==='tool_result'){
           resultCount++;
           if(openCard){var b=openCard.querySelector('.tc-badge');if(b){b.textContent='done';b.classList.add('done');}openCard=null;}
+          markStepDone('tool_route', esc(ev.tool)+' ✓');
           rpToolResultCard(ev.tool,ev.output||'');
           scrollBottom();
 
@@ -674,6 +749,9 @@ async function ask(text) {
         }else if(ev.type==='tool_call') {
           resultCount++;
           const card=makeToolCard(ev.agent,ev.tool); trace.appendChild(card); openCard=card;
+          // reset tool_route badge to running for this new invocation
+          const _ss=$('ss-tool_route');
+          if(_ss){_ss.className='step-status running';_ss.textContent='● running';}
           rpToolCall(ev.agent,ev.tool,ev.server,ev.gateway);
           thinkingEl.querySelector('.thinking-text').textContent='Running '+ev.agent+' → '+ev.tool+'…';
           scrollBottom();
@@ -684,6 +762,8 @@ async function ask(text) {
 
         }else if(ev.type==='final') {
           if(openCard){openCard.querySelector('.tc-badge').textContent='done';openCard.querySelector('.tc-badge').classList.add('done');}
+          markAllRunningStepsDone('done');
+          markStepDone('synthesize', 'answer ready');
           thinkingEl.remove();
           const synth=document.getElementById('synth-body');
           if(synth) synth.textContent='✅ Answer composed from '+resultCount+' sources';
@@ -694,6 +774,7 @@ async function ask(text) {
           scrollBottom();
 
         }else if(ev.type==='error') {
+          markAllRunningStepsDone('error');
           thinkingEl.remove();
           const err=document.createElement('div'); err.className='err-bubble'; err.innerHTML='⚠️ Agent error: '+(ev.text||'check server logs — run: tail -50 logs/agent-server.log');
           aiInner.appendChild(err); scrollBottom();

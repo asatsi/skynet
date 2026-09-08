@@ -52,8 +52,7 @@ async def health():
                 results[name] = {"status": "DOWN", "error": str(e)[:80]}
         # MCP Gateway
         try:
-            from agents.config import MCP_GATEWAY_URL
-            r = await http.get(f"{MCP_GATEWAY_URL}/gateway/tools", timeout=5)
+            r = await http.get(f"{MCP_GATEWAY}/tools", timeout=5)
             tools = r.json().get("tools", []) if r.is_success else []
             results["mcp_gateway"] = {"status": "UP", "tools_registered": len(tools)}
         except Exception as e:

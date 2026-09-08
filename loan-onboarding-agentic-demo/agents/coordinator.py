@@ -7,43 +7,38 @@ from typing import Any
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import interrupt
-from mcp.client.sse import sse_client
-from mcp import ClientSession
+# MCP SSE imports removed — all tool calls go through MCP Gateway
 
 from agents.state import LoanState
 from agents.config import (
     OLLAMA_URL, OLLAMA_MODEL, INTENT_AGENT_MAP,
-    MCP_CUSTOMER, MCP_KYC, MCP_DOCUMENT,
-    MCP_RISK, MCP_WORKFLOW, MCP_KNOWLEDGE,
-    LOAN_SERVICE,
+    MCP_GATEWAY, LOAN_SERVICE,
 )
 
 # ── MCP SSE tool caller ────────────────────────────────────────────────────────
-async def call_mcp_tool(mcp_url: str, tool_name: str, arguments: dict) -> Any:
-    """Call a tool on an MCP server via the SSE/MCP protocol."""
+async def call_gateway_tool(agent: str, tool_name: str, arguments: dict) -> Any:
+    """Route a tool call through the MCP Gateway (single entry point)."""
     try:
-        async with sse_client(mcp_url) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-                result = await session.call_tool(tool_name, arguments=arguments)
-                if result.content:
-                    text = result.content[0].text
-                    try:
-                        return json.loads(text)
-                    except Exception:
-                        return text
-                return None
+        async with httpx.AsyncClient() as http:
+            r = await http.post(
+                f"{MCP_GATEWAY}/call/{tool_name}",
+                json={"arguments": arguments, "domain": agent},
+                timeout=httpx.Timeout(connect=5.0, read=30.0, write=10.0, pool=5.0),
+            )
+            data = r.json()
+            if data.get("status") == "ERROR":
+                return {"error": data.get("result", {}).get("error", str(data))}
+            result = data.get("result")
+            if isinstance(result, str):
+                try:
+                    return json.loads(result)
+                except Exception:
+                    return result
+            return result
     except Exception as e:
-        return {"error": f"MCP call failed ({mcp_url} → {tool_name}): {e}"}
+        return {"error": f"Gateway call failed ({tool_name}): {e}"}
 
-MCP_URL_MAP = {
-    "customer":  MCP_CUSTOMER,
-    "kyc":       MCP_KYC,
-    "document":  MCP_DOCUMENT,
-    "risk":      MCP_RISK,
-    "workflow":  MCP_WORKFLOW,
-    "knowledge": MCP_KNOWLEDGE,
-}
+# Tool calls are routed through MCP_GATEWAY — no per-server URL map needed.
 
 # ── Error-detection helpers ───────────────────────────────────────────────────
 def _is_error(val) -> bool:
@@ -74,7 +69,7 @@ def _is_error(val) -> bool:
         msg = str(val.get("message") or "").lower()
         if "not found" in msg or "does not exist" in msg or "no such" in msg:
             return True
-        # Explicit error wrapper from call_mcp_tool exception handler
+        # Explicit error wrapper from call_gateway_tool exception handler
         if list(val.keys()) == ["error"]:   # {"error": "MCP call failed..."}
             return True
         return False   # valid entity dict — NOT an error
@@ -239,11 +234,9 @@ async def execute_agents(state: LoanState) -> dict:
     results: dict = {}
 
     async def mcp(agent: str, tool: str, args: dict, key: str):
-        url = MCP_URL_MAP.get(agent)
-        if not url:
-            return
-        calls.append({"agent": agent, "tool": tool, "args": args})
-        results[key] = await call_mcp_tool(url, tool, args)
+        calls.append({"agent": agent, "tool": tool, "args": args,
+                      "server": f"{MCP_GATEWAY}/call/{tool}"})
+        results[key] = await call_gateway_tool(agent, tool, args)
 
     # ── Customer agent via Customer MCP (:9001) ────────────────────────────
     if "customer" in agents:
@@ -309,12 +302,12 @@ async def execute_agents(state: LoanState) -> dict:
         if lid:
             calls.append({"agent": "loan", "tool": "get_loan_by_id",
                           "args": {"loan_id": lid}})
-            results["loan_application"] = await call_mcp_tool(
-                MCP_LOAN, "get_loan_by_id", {"loan_id": lid})
+            results["loan_application"] = await call_gateway_tool(
+                "loan", "get_loan_by_id", {"loan_id": lid})
         else:
             calls.append({"agent": "loan", "tool": "get_all_loans", "args": {}})
-            results["loan_applications"] = await call_mcp_tool(
-                MCP_LOAN, "get_all_loans", {})
+            results["loan_applications"] = await call_gateway_tool(
+                "loan", "get_all_loans", {})
 
     # ── Knowledge agent via Knowledge MCP (:9006) ─────────────────────────
     if "knowledge" in agents:
